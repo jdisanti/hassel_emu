@@ -4,6 +4,7 @@ use std::cell::RefCell;
 use std::rc::Rc;
 
 const RAM_SIZE: usize = 32768;
+const ROM_START: usize = 0x8010;
 
 pub struct CpuBusDebugger {
     last_read: Vec<u16>,
@@ -74,8 +75,8 @@ impl Bus for CpuBus {
         let addr: usize = addr as usize;
         match addr {
             0x0000...0x7FFF => self.ram[addr],
-            0x8000...0x83FF => self.peripheral_bus.borrow().read_byte(addr as u16),
-            0x8400...0xFFFF => self.rom[addr - 0x8400],
+            0x8000...0x800F => self.peripheral_bus.borrow().read_byte(addr as u16),
+            0x8010...0xFFFF => self.rom[addr - ROM_START],
             _ => { 0 }
         }
     }
@@ -86,8 +87,8 @@ impl Bus for CpuBus {
         let addr: usize = addr as usize;
         match addr {
             0x0000...0x7FFF => self.ram[addr],
-            0x8000...0x83FF => self.peripheral_bus.borrow_mut().read_byte_mut(addr as u16),
-            0x8400...0xFFFF => self.rom[addr - 0x8400],
+            0x8000...0x800F => self.peripheral_bus.borrow_mut().read_byte_mut(addr as u16),
+            0x8010...0xFFFF => self.rom[addr - ROM_START],
             _ => { 0 }
         }
     }
@@ -98,8 +99,8 @@ impl Bus for CpuBus {
         let addr: usize = addr as usize;
         match addr {
             0x0000...0x7FFF => self.ram[addr] = val,
-            0x8000...0x83FF => self.peripheral_bus.borrow_mut().write_byte(addr as u16, val),
-            0x8400...0xFFFF => panic!("Attempted to write to ROM location: 0x{:04X}", addr),
+            0x8000...0x800F => self.peripheral_bus.borrow_mut().write_byte(addr as u16, val),
+            0x8010...0xFFFF => panic!("Attempted to write to ROM location: 0x{:04X}", addr),
             _ => panic!("Unknown write memory location: 0x{:04X}", addr)
         }
     }
