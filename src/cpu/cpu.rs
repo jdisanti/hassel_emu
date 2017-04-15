@@ -32,13 +32,11 @@ pub struct Cpu {
 }
 
 impl Cpu {
-    pub fn new(prg: &[u8],
-               apu_bus: Rc<RefCell<Bus>>,
-               ppu_bus: Rc<RefCell<Bus>>,
-               input_bus: Rc<RefCell<Bus>>) -> Cpu {
+    pub fn new(rom: Vec<u8>,
+               peripheral_bus: Rc<RefCell<Bus>>) -> Cpu {
         let mut cpu = Cpu {
             registers: Registers::new(),
-            bus: CpuBus::new(prg, apu_bus, ppu_bus, input_bus),
+            bus: CpuBus::new(rom, peripheral_bus),
             cycle: 0,
             dma_buffer: Vec::new(),
             executor: Executor::new(),

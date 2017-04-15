@@ -53,7 +53,7 @@ impl_instruction!(JMP_ABS => execute_jmp_abs [_mode, params, _reg, _bus, result]
 
 // TODO: unit test
 impl_instruction!(JMP_INDIRECT => execute_jmp_indirect [_mode, params, _reg, bus, result] {
-    result.reg.pc = Bus::read_word_bugged_boundary_mut(bus, params.word());
+    result.reg.pc = Bus::read_word_mut(bus, params.word());
 });
 
 // TODO: unit test

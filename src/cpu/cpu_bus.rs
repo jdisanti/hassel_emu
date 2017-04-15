@@ -3,6 +3,8 @@ use bus::Bus;
 use std::cell::RefCell;
 use std::rc::Rc;
 
+const RAM_SIZE: usize = 32768;
+
 pub struct CpuBusDebugger {
     last_read: Vec<u16>,
     last_written: Vec<u16>,
@@ -39,25 +41,19 @@ impl CpuBusDebugger {
 }
 
 pub struct CpuBus {
-    ram: [u8; 2048],
-    prg: Vec<u8>,
-    apu: Rc<RefCell<Bus>>,
-    ppu: Rc<RefCell<Bus>>,
-    input: Rc<RefCell<Bus>>,
+    ram: [u8; RAM_SIZE],
+    rom: Vec<u8>,
+    peripheral_bus: Rc<RefCell<Bus>>,
     debugger: RefCell<CpuBusDebugger>,
 }
 
 impl CpuBus {
-    pub fn new(prg: &[u8],
-               apu: Rc<RefCell<Bus>>,
-               ppu: Rc<RefCell<Bus>>,
-               input: Rc<RefCell<Bus>>) -> CpuBus {
+    pub fn new(rom: Vec<u8>,
+               peripheral_bus: Rc<RefCell<Bus>>) -> CpuBus {
         CpuBus {
-            ram: [0u8; 2048],
-            prg: Vec::from(prg),
-            apu: apu,
-            ppu: ppu,
-            input: input,
+            ram: [0u8; RAM_SIZE],
+            rom: rom,
+            peripheral_bus: peripheral_bus,
             debugger: RefCell::new(CpuBusDebugger::new()),
         }
     }
@@ -76,23 +72,10 @@ impl Bus for CpuBus {
         self.debugger.borrow_mut().read(addr);
 
         let addr: usize = addr as usize;
-        // Memory map: http://wiki.nesdev.com/w/index.php/CPU_memory_map
         match addr {
-            0x0000...0x07FF => self.ram[addr],
-            0x0800...0x0FFF => self.ram[addr - 0x0800],
-            0x1000...0x17FF => self.ram[addr - 0x1000],
-            0x1800...0x1FFF => self.ram[addr - 0x1800],
-            0x2000...0x3FFF => self.ppu.borrow().read_byte(addr as u16),
-            0x4000...0x4013 => self.apu.borrow().read_byte(addr as u16),
-            0x4014 => self.ppu.borrow().read_byte(addr as u16),
-            0x4015 => self.apu.borrow().read_byte(addr as u16),
-            0x4016...0x4017 => self.input.borrow().read_byte(addr as u16),
-            0x4018...0x401F => self.apu.borrow().read_byte(addr as u16),
-            0x4020...0x7FFF => { 0 }
-            0x8000...0xFFFF => {
-                let offset = (addr - 0x8000) % self.prg.len();
-                return self.prg[offset]
-            },
+            0x0000...0x7FFF => self.ram[addr],
+            0x8000...0x83FF => self.peripheral_bus.borrow().read_byte(addr as u16),
+            0x8400...0xFFFF => self.rom[addr - 0x8400],
             _ => { 0 }
         }
     }
@@ -101,24 +84,11 @@ impl Bus for CpuBus {
         self.debugger.borrow_mut().read(addr);
 
         let addr: usize = addr as usize;
-        // Memory map: http://wiki.nesdev.com/w/index.php/CPU_memory_map
         match addr {
-            0x0000...0x07FF => self.ram[addr],
-            0x0800...0x0FFF => self.ram[addr - 0x0800],
-            0x1000...0x17FF => self.ram[addr - 0x1000],
-            0x1800...0x1FFF => self.ram[addr - 0x1800],
-            0x2000...0x3FFF => self.ppu.borrow_mut().read_byte_mut(addr as u16),
-            0x4000...0x4013 => self.apu.borrow_mut().read_byte_mut(addr as u16),
-            0x4014 => self.ppu.borrow_mut().read_byte_mut(addr as u16),
-            0x4015 => self.apu.borrow_mut().read_byte_mut(addr as u16),
-            0x4016...0x4017 => self.input.borrow_mut().read_byte_mut(addr as u16),
-            0x4018...0x401F => self.apu.borrow_mut().read_byte_mut(addr as u16),
-            0x4020...0x7FFF => panic!("Unhandled read cartridge location: 0x{:04X}", addr),
-            0x8000...0xFFFF => {
-                let offset = (addr - 0x8000) % self.prg.len();
-                return self.prg[offset]
-            },
-            _ => panic!("Unknown read memory location: 0x{:04X}", addr)
+            0x0000...0x7FFF => self.ram[addr],
+            0x8000...0x83FF => self.peripheral_bus.borrow_mut().read_byte_mut(addr as u16),
+            0x8400...0xFFFF => self.rom[addr - 0x8400],
+            _ => { 0 }
         }
     }
 
@@ -126,19 +96,10 @@ impl Bus for CpuBus {
         self.debugger.borrow_mut().write(addr);
 
         let addr: usize = addr as usize;
-        // Memory map: http://wiki.nesdev.com/w/index.php/CPU_memory_map
         match addr {
-            0x0000...0x07FF => self.ram[addr] = val,
-            0x0800...0x0FFF => self.ram[addr - 0x0800] = val,
-            0x1000...0x17FF => self.ram[addr - 0x1000] = val,
-            0x1800...0x1FFF => self.ram[addr - 0x1800] = val,
-            0x2000...0x3FFF => self.ppu.borrow_mut().write_byte(addr as u16, val),
-            0x4000...0x4013 => self.apu.borrow_mut().write_byte(addr as u16, val),
-            0x4014 => self.ppu.borrow_mut().write_byte(addr as u16, val),
-            0x4015 => self.apu.borrow_mut().write_byte(addr as u16, val),
-            0x4016...0x4017 => self.input.borrow_mut().write_byte(addr as u16, val),
-            0x4018...0x401F => self.apu.borrow_mut().write_byte(addr as u16, val),
-            0x4020...0xFFF9 => panic!("Unhandled write cartridge location: 0x{:04X}", addr),
+            0x0000...0x7FFF => self.ram[addr] = val,
+            0x8000...0x83FF => self.peripheral_bus.borrow_mut().write_byte(addr as u16, val),
+            0x8400...0xFFFF => panic!("Attempted to write to ROM location: 0x{:04X}", addr),
             _ => panic!("Unknown write memory location: 0x{:04X}", addr)
         }
     }
@@ -153,36 +114,9 @@ mod tests {
     use std::rc::Rc;
 
     fn fake_bus() -> CpuBus {
-        let apu = Rc::new(RefCell::new(PlaceholderBus::new(String::from("APU"))));
-        let ppu = Rc::new(RefCell::new(PlaceholderBus::new(String::from("PPU"))));
-        let input = Rc::new(RefCell::new(PlaceholderBus::new(String::from("IO"))));
-        let prg = [0u8; 8 * 1024];
-        CpuBus::new(&prg, apu, ppu, input)
-    }
-
-    #[test]
-    fn test_internal_ram_boundaries_and_mirroring() {
-        let mut bus = fake_bus();
-
-        assert_eq!(0, bus.read_byte_mut(0x0000));
-        assert_eq!(0, bus.read_byte_mut(0x07FF));
-        bus.write_byte(0x0000, 0xDC);
-        bus.write_byte(0x07FF, 0xCD);
-
-        assert_eq!(0xDC, bus.read_byte_mut(0x0000));
-        assert_eq!(0xDC, bus.read_byte_mut(0x0800));
-        assert_eq!(0xDC, bus.read_byte_mut(0x1000));
-        assert_eq!(0xDC, bus.read_byte_mut(0x1800));
-
-        assert_eq!(0xCD, bus.read_byte_mut(0x07FF));
-        assert_eq!(0xCD, bus.read_byte_mut(0x0FFF));
-        assert_eq!(0xCD, bus.read_byte_mut(0x17FF));
-        assert_eq!(0xCD, bus.read_byte_mut(0x1FFF));
-
-        bus.write_byte(0x1100, 0xAC);
-        assert_eq!(0xAC, bus.read_byte_mut(0x1100));
-        assert_eq!(0xAC, bus.read_byte_mut(0x0900));
-        assert_eq!(0xAC, bus.read_byte_mut(0x0100));
+        let peripheral_bus = Rc::new(RefCell::new(PlaceholderBus::new(String::from("IO"))));
+        let rom = vec![0u8; 31744];
+        CpuBus::new(&rom, peripheral_bus)
     }
 
     #[test]
