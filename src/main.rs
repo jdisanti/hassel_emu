@@ -13,7 +13,7 @@ use std::rc::Rc;
 use std::thread;
 use std::time::Duration;
 
-pub const ROM_SIZE: usize = 32752;
+pub const ROM_SIZE: usize = 28672;
 
 pub struct Emulator {
     cpu: Box<Cpu>,
