@@ -3,8 +3,53 @@ use bus::Bus;
 use std::cell::RefCell;
 use std::rc::Rc;
 
-const RAM_SIZE: usize = 32768;
-const ROM_START: usize = 0x9000;
+//
+//  Memory map
+//  ----------
+//
+//  Two peripheral ports at 0xDFFE and 0xDFFF
+//
+//  ```
+//  +-------------------+ 0x0000
+//  |                   |
+//  |                   |
+//  |                   |
+//  |                   |
+//  |                   |
+//  |                   |
+//  |                   |
+//  |                   |
+//  |                   |
+//  |                   |
+//  |                   |
+//  |        RAM        |
+//  |                   |
+//  |                   |
+//  |                   |
+//  |                   |
+//  |                   |
+//  |                   |
+//  |                   |
+//  |                   |
+//  |        I/O        |
+//  +-------------------+ 0xE000
+//  |                   |
+//  |        ROM        |
+//  |                   |
+//  +-------------------+
+//  ```
+//
+
+const RAM_START: usize = 0x0000;
+const RAM_END_INCL: usize = 0xDFFD;
+
+const IO_START: usize = 0xDFFE;
+const IO_END_INCL: usize = 0xDFFF;
+
+const ROM_START: usize = IO_END_INCL + 1;
+const ROM_END_INCL: usize = 0xFFFF;
+
+const RAM_SIZE: usize = RAM_END_INCL + 1 - RAM_START;
 
 pub struct CpuBusDebugger {
     last_read: Vec<u16>,
@@ -74,9 +119,9 @@ impl Bus for CpuBus {
 
         let addr: usize = addr as usize;
         match addr {
-            0x0000...0x7FFF => self.ram[addr],
-            0x8000...0x8FFF => self.peripheral_bus.borrow().read_byte(addr as u16),
-            0x9000...0xFFFF => self.rom[addr - ROM_START],
+            RAM_START...RAM_END_INCL => self.ram[addr],
+            IO_START...IO_END_INCL => self.peripheral_bus.borrow().read_byte(addr as u16),
+            ROM_START...ROM_END_INCL => self.rom[addr - ROM_START],
             _ => { 0 }
         }
     }
@@ -86,9 +131,9 @@ impl Bus for CpuBus {
 
         let addr: usize = addr as usize;
         match addr {
-            0x0000...0x7FFF => self.ram[addr],
-            0x8000...0x8FFF => self.peripheral_bus.borrow_mut().read_byte_mut(addr as u16),
-            0x9000...0xFFFF => self.rom[addr - ROM_START],
+            RAM_START...RAM_END_INCL => self.ram[addr],
+            IO_START...IO_END_INCL => self.peripheral_bus.borrow_mut().read_byte_mut(addr as u16),
+            ROM_START...ROM_END_INCL => self.rom[addr - ROM_START],
             _ => { 0 }
         }
     }
@@ -98,9 +143,9 @@ impl Bus for CpuBus {
 
         let addr: usize = addr as usize;
         match addr {
-            0x0000...0x7FFF => self.ram[addr] = val,
-            0x8000...0x8FFF => self.peripheral_bus.borrow_mut().write_byte(addr as u16, val),
-            0x9000...0xFFFF => panic!("Attempted to write to ROM location: 0x{:04X}", addr),
+            RAM_START...RAM_END_INCL => self.ram[addr] = val,
+            IO_START...IO_END_INCL => self.peripheral_bus.borrow_mut().write_byte(addr as u16, val),
+            ROM_START...ROM_END_INCL => panic!("Attempted to write to ROM location: 0x{:04X}", addr),
             _ => panic!("Unknown write memory location: 0x{:04X}", addr)
         }
     }

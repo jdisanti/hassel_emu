@@ -13,7 +13,7 @@ use std::rc::Rc;
 use std::thread;
 use std::time::Duration;
 
-pub const ROM_SIZE: usize = 28672;
+pub const ROM_SIZE: usize = 0x2000;
 
 pub struct Emulator {
     cpu: Box<Cpu>,
@@ -43,8 +43,8 @@ impl Emulator {
     }
 
     pub fn step(&mut self) {
-        self.cpu.next_instruction();
         println!("{}", self.cpu.debug_next_instruction());
+        self.cpu.next_instruction();
     }
 }
 
