@@ -13,6 +13,7 @@ use std::fs::File;
 use std::io::prelude::*;
 use std::cell::RefCell;
 use std::rc::Rc;
+use std::time::Instant;
 
 use std::thread;
 use std::time::Duration;
@@ -97,11 +98,12 @@ impl Emulator {
         self.cpu.reset();
     }
 
-    pub fn step(&mut self) {
-        println!("{}", self.cpu.debug_next_instruction());
+    pub fn step(&mut self) -> usize {
+        //println!("{}", self.cpu.debug_next_instruction());
         self.last_pc = self.cpu.reg_pc();
-        self.cpu.next_instruction();
+        let cycles = self.cpu.next_instruction();
         self.peripheral_bus.borrow_mut().graphics_bus.execute_peripheral_operations(&mut *self.cpu);
+        cycles
     }
 }
 
@@ -124,12 +126,35 @@ fn main() {
     };
 
     emulator.reset();
+
+    let start_time = Instant::now();
+    let mut total_cycles: usize = 0;
+    let mut last_render = Instant::now();
+    let mut last_instruction = Instant::now();
     while emulator.is_good() && !emulator.is_halted() {
-        emulator.draw();
-        emulator.step();
+        let time_last_render = Instant::now().duration_since(last_render);
+        if time_last_render.subsec_nanos() > 13_000_000u32 {
+            emulator.draw();
+            last_render = Instant::now();
+        }
+
+        let cycles = emulator.step() as u32;
+        total_cycles += cycles as usize;
+
+        // Slow down so that we're running at approximately 6 MHz
+        loop {
+            let time_last_instruction = Instant::now().duration_since(last_instruction);
+            if time_last_instruction.subsec_nanos() > cycles * 167u32 {
+                last_instruction = Instant::now();
+                break;
+            }
+        }
     }
 
-    println!("Halted. Leaving screen open to view results.");
+    let end_time = Instant::now().duration_since(start_time);
+
+    println!("Halted after {} cycles. Took {} seconds. Leaving screen open to view results.",
+        total_cycles, end_time.as_secs() as f64 + end_time.subsec_nanos() as f64 / 1_000_000_000f64);
     while emulator.is_good() {
         emulator.draw();
         thread::sleep(Duration::from_millis(10u64));

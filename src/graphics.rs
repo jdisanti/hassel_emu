@@ -162,12 +162,19 @@ impl GraphicsBus {
     }
 
     fn put_chr(&mut self, code_point: u8) {
-        let (x, y) = (self.cursor_x, self.cursor_y);
-        self.blit_chr(x, y, code_point);
-        self.cursor_x += 1;
-        if self.cursor_x as usize >= SCREEN_WIDTH_CHARS {
+        if code_point == '\n' as u8 {
             self.cursor_x = 0;
             self.cursor_y += 1;
+        } else if code_point == '\r' as u8 {
+            self.cursor_x = 0;
+        } else {
+            let (x, y) = (self.cursor_x, self.cursor_y);
+            self.blit_chr(x, y, code_point);
+            self.cursor_x += 1;
+            if self.cursor_x as usize >= SCREEN_WIDTH_CHARS {
+                self.cursor_x = 0;
+                self.cursor_y += 1;
+            }
         }
     }
 

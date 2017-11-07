@@ -109,6 +109,6 @@ impl Cpu {
 
         self.registers = result.reg;
         self.cycle += result.cycles;
-        self.cycle
+        result.cycles
     }
 }
