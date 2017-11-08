@@ -2,11 +2,12 @@ extern crate minifb;
 
 mod cpu;
 mod bus;
-mod graphics;
+mod graphics_bus;
+mod peripheral_bus;
 
 use bus::Bus;
 use cpu::Cpu;
-use graphics::GraphicsBus;
+use peripheral_bus::PeripheralBus;
 
 use std::env;
 use std::fs::File;
@@ -19,37 +20,6 @@ use std::thread;
 use std::time::Duration;
 
 pub const ROM_SIZE: usize = 0x2000;
-
-pub struct PeripheralBus {
-    pub graphics_bus: Box<GraphicsBus>,
-}
-
-impl Bus for PeripheralBus {
-    fn read_byte(&self, addr: u16) -> u8 {
-        if addr == 0xDFFE {
-            self.graphics_bus.read_byte(addr)
-        } else {
-            // TODO: Non-graphics peripherals
-            0
-        }
-    }
-
-    fn read_byte_mut(&mut self, addr: u16) -> u8 {
-        if addr == 0xDFFE {
-            self.graphics_bus.read_byte_mut(addr)
-        } else {
-            // TODO: Non-graphics peripherals
-            0
-        }
-    }
-
-    fn write_byte(&mut self, addr: u16, val: u8) {
-        if addr == 0xDFFE {
-            self.graphics_bus.write_byte(addr, val);
-        }
-        // TODO: Non-graphics peripherals
-    }
-}
 
 pub struct Emulator {
     cpu: Box<Cpu>,
@@ -70,11 +40,7 @@ impl Emulator {
             return Err(format!("ROM has unexpected size ({}); should be {} bytes.", rom.len(), ROM_SIZE))
         }
 
-        let graphics_bus = Box::new(GraphicsBus::new());
-        let peripheral_bus = Rc::new(RefCell::new(PeripheralBus {
-            graphics_bus: graphics_bus,
-        }));
-
+        let peripheral_bus = Rc::new(RefCell::new(PeripheralBus::new()));
         Ok(Emulator {
             cpu: Box::new(Cpu::new(rom, peripheral_bus.clone())),
             peripheral_bus: peripheral_bus,
@@ -83,7 +49,7 @@ impl Emulator {
     }
 
     pub fn is_good(&self) -> bool {
-        self.peripheral_bus.borrow().graphics_bus.is_good()
+        self.peripheral_bus.borrow().is_good()
     }
 
     pub fn is_halted(&self) -> bool {
@@ -91,7 +57,7 @@ impl Emulator {
     }
 
     pub fn draw(&mut self) {
-        self.peripheral_bus.borrow_mut().graphics_bus.draw();
+        self.peripheral_bus.borrow_mut().draw();
     }
 
     pub fn reset(&mut self) {
@@ -102,7 +68,7 @@ impl Emulator {
         //println!("{}", self.cpu.debug_next_instruction());
         self.last_pc = self.cpu.reg_pc();
         let cycles = self.cpu.next_instruction();
-        self.peripheral_bus.borrow_mut().graphics_bus.execute_peripheral_operations(&mut *self.cpu);
+        self.peripheral_bus.borrow_mut().execute_peripheral_operations(&mut *self.cpu);
         cycles
     }
 }

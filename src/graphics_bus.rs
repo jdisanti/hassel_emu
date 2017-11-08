@@ -1,14 +1,13 @@
-use minifb::{Window, WindowOptions};
+use minifb::Window;
 
-use bus::Bus;
 use cpu::Cpu;
 
 const CHAR_WIDTH: usize = 9;
 const CHAR_HEIGHT: usize = 16;
 const SCREEN_WIDTH_CHARS: usize = 71;
 const SCREEN_HEIGHT_CHARS: usize = 30;
-const SCREEN_WIDTH_PIXELS: usize = CHAR_WIDTH * SCREEN_WIDTH_CHARS;
-const SCREEN_HEIGHT_PIXELS: usize = CHAR_HEIGHT * SCREEN_HEIGHT_CHARS;
+pub const SCREEN_WIDTH_PIXELS: usize = CHAR_WIDTH * SCREEN_WIDTH_CHARS;
+pub const SCREEN_HEIGHT_PIXELS: usize = CHAR_HEIGHT * SCREEN_HEIGHT_CHARS;
 const FRAME_BUFFER_SIZE: usize = SCREEN_WIDTH_PIXELS * SCREEN_HEIGHT_PIXELS;
 
 const FONT: &'static [u8] = include_bytes!("./vga_font_glyph9x16_image288x128_monochrome.data");
@@ -29,22 +28,34 @@ enum IOState {
 
 pub struct GraphicsBus {
     frame_buffer: Vec<u32>,
-    window: Window,
     next_command: IOState,
     cursor_x: u8,
     cursor_y: u8,
 }
 
-impl Bus for GraphicsBus {
-    fn read_byte(&self, addr: u16) -> u8 {
+
+impl GraphicsBus {
+    pub fn new() -> GraphicsBus {
+        let mut frame_buffer: Vec<u32> = vec![0u32; FRAME_BUFFER_SIZE];
+
+        let mut bus = GraphicsBus {
+            frame_buffer: frame_buffer,
+            next_command: IOState::Listening,
+            cursor_x: 0,
+            cursor_y: 0,
+        };
+        bus
+    }
+
+    pub fn read_byte(&self, addr: u16) -> u8 {
         0
     }
 
-    fn read_byte_mut(&mut self, addr: u16) -> u8 {
+    pub fn read_byte_mut(&mut self, addr: u16) -> u8 {
         0
     }
 
-    fn write_byte(&mut self, addr: u16, val: u8) {
+    pub fn write_byte(&mut self, addr: u16, val: u8) {
         self.next_command = match self.next_command {
             IOState::Listening => {
                 match val {
@@ -78,27 +89,6 @@ impl Bus for GraphicsBus {
                 }
             }
         };
-    }
-}
-
-impl GraphicsBus {
-    pub fn new() -> GraphicsBus {
-        let mut frame_buffer: Vec<u32> = vec![0u32; FRAME_BUFFER_SIZE];
-        let mut window = Window::new("Hasseldorf Emulator",
-                SCREEN_WIDTH_PIXELS,
-                SCREEN_HEIGHT_PIXELS,
-                WindowOptions::default()).unwrap_or_else(|e| {
-            panic!("Failed to create a window: {}", e);
-        });
-
-        let mut bus = GraphicsBus {
-            frame_buffer: frame_buffer,
-            window: window,
-            next_command: IOState::Listening,
-            cursor_x: 0,
-            cursor_y: 0,
-        };
-        bus
     }
 
     pub fn execute_peripheral_operations(&mut self, cpu: &mut Cpu) {
@@ -153,12 +143,8 @@ impl GraphicsBus {
         }
     }
 
-    pub fn is_good(&self) -> bool {
-        self.window.is_open()
-    }
-
-    pub fn draw(&mut self) {
-        self.window.update_with_buffer(&self.frame_buffer).unwrap();
+    pub fn draw(&mut self, window: &mut Window) {
+        window.update_with_buffer(&self.frame_buffer).unwrap();
     }
 
     fn put_chr(&mut self, code_point: u8) {
