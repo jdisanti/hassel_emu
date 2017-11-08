@@ -18,6 +18,7 @@ macro_rules! op_branch {
 
 const NMI_VECTOR: u16 = 0xFFFA;
 const RESET_VECTOR: u16 = 0xFFFC;
+const IRQ_VECTOR: u16 = 0xFFFE;
 
 const STACK_ADDR: u16 = 0x0100;
 
@@ -66,16 +67,30 @@ impl Cpu {
         registers.sp = registers.sp.wrapping_sub(1);
     }
 
-    pub fn nmi_interrupt(&mut self) {
-        let nmi_addr = Bus::read_word_mut(&mut self.bus, NMI_VECTOR);
+    fn interrupt(&mut self, handler_address: u16) {
         let mut registers = self.registers;
         let cur_pc = registers.pc;
         let cur_status = registers.status.value();
         self.push(&mut registers, (cur_pc >> 8) as u8);
         self.push(&mut registers, (cur_pc & 0xFF) as u8);
         self.push(&mut registers, cur_status);
-        registers.pc = nmi_addr;
+        registers.pc = handler_address;
         self.registers = registers;
+    }
+
+    pub fn interrupt_request(&mut self) -> bool {
+        if !self.registers.status.interrupt_inhibit() {
+            let interrupt_addr = Bus::read_word_mut(&mut self.bus, IRQ_VECTOR);
+            self.interrupt(interrupt_addr);
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn nmi_interrupt(&mut self) {
+        let nmi_addr = Bus::read_word_mut(&mut self.bus, NMI_VECTOR);
+        self.interrupt(nmi_addr);
     }
 
     pub fn dma_slice(&mut self, dma_addr: u16, dma_size: u16) -> &[u8] {

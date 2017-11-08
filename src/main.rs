@@ -5,7 +5,6 @@ mod bus;
 mod graphics_bus;
 mod peripheral_bus;
 
-use bus::Bus;
 use cpu::Cpu;
 use peripheral_bus::PeripheralBus;
 
@@ -65,7 +64,7 @@ impl Emulator {
     }
 
     pub fn step(&mut self) -> usize {
-        //println!("{}", self.cpu.debug_next_instruction());
+        println!("{}", self.cpu.debug_next_instruction());
         self.last_pc = self.cpu.reg_pc();
         let cycles = self.cpu.next_instruction();
         self.peripheral_bus.borrow_mut().execute_peripheral_operations(&mut *self.cpu);
@@ -97,7 +96,7 @@ fn main() {
     let mut total_cycles: usize = 0;
     let mut last_render = Instant::now();
     let mut last_instruction = Instant::now();
-    while emulator.is_good() && !emulator.is_halted() {
+    while emulator.is_good() /*&& !emulator.is_halted()*/ {
         let time_last_render = Instant::now().duration_since(last_render);
         if time_last_render.subsec_nanos() > 13_000_000u32 {
             emulator.draw();
