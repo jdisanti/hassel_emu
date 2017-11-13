@@ -24,7 +24,7 @@ const STACK_ADDR: u16 = 0x0100;
 
 pub struct Cpu {
     registers: Registers,
-    bus: CpuBus,
+    pub bus: CpuBus,
 
     cycle: usize,
     dma_buffer: Vec<u8>,
