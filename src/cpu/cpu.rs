@@ -52,6 +52,10 @@ impl Cpu {
         self.registers.pc = entry_point;
     }
 
+    pub fn registers(&self) -> &Registers {
+        &self.registers
+    }
+
     pub fn reg_pc(&self) -> u16 {
         self.registers.pc
     }
@@ -108,7 +112,7 @@ impl Cpu {
 
     pub fn debug_next_instruction(&mut self) -> String {
         let op = Op::decode(&mut self.bus, self.registers.pc);
-        let opcode_str = op.debug(&self.bus, self.registers.pc + op.len);
+        let opcode_str = op.debug(&self, &self.bus, self.registers.pc + op.len);
         format!("{:04X}  {:41}", self.registers.pc, opcode_str)
     }
 

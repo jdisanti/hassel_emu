@@ -60,6 +60,29 @@ impl OpAddressMode {
         (different_page, result)
     }
 
+    pub fn debug_address(&self, param: &OpParam, reg: &Registers, bus: &Bus) -> u16 {
+        use cpu::opcode::OpAddressMode::*;
+        let addr = match *self {
+            Implied => 0,
+            Immediate => param.word(),
+            Absolute => param.word(),
+            AbsoluteOffsetX => return OpAddressMode::offset(param.word(), reg.x).1,
+            AbsoluteOffsetY => return OpAddressMode::offset(param.word(), reg.y).1,
+            ZeroPage => param.word(),
+            ZeroPageOffsetX => param.0.wrapping_add(reg.x) as u16,
+            ZeroPageOffsetY => param.0.wrapping_add(reg.y) as u16,
+            PCOffset => (reg.pc & 0xFF00) + (param.0.wrapping_add(reg.pc as u8) as u16),
+            Indirect => Bus::read_word(bus, param.word()),
+            PreIndirectX => Bus::read_word_zero_page(bus, param.0.wrapping_add(reg.x)),
+            PostIndirectY => {
+                let addr = Bus::read_word_zero_page(bus, param.0);
+                return OpAddressMode::offset(addr, reg.y).1;
+            }
+        };
+
+        addr
+    }
+
     pub fn address(&self, param: &OpParam, reg: &Registers, bus: &mut Bus) -> (bool, u16) {
         use cpu::opcode::OpAddressMode::*;
         let addr = match *self {
@@ -405,9 +428,18 @@ impl Op {
         }
     }
 
-    pub fn debug(&self, bus: &Bus, reg_pc: u16) -> String {
+    pub fn debug(&self, cpu: &::cpu::Cpu, bus: &Bus, reg_pc: u16) -> String {
         use cpu::opcode::OpAddressMode::*;
         let p = &self.param;
+
+        let registers = cpu.registers();
+        let register_view = format!(
+            "A: {:02X}  X: {:02X}  Y: {:02X}  S: {:02X}",
+            registers.a,
+            registers.x,
+            registers.y,
+            registers.status.value(),
+        );
 
         let branch_location = (reg_pc as i32).wrapping_add(p.0 as i32) as u16;
 
@@ -418,45 +450,52 @@ impl Op {
             _ => panic!("Unknown op-code length: {}", self.len),
         };
 
+        let addr = self.address_mode.debug_address(p, registers, bus);
+        let value = bus.read_byte(addr);
         let instr_view = match self.len {
             1 => format!("{}", self.name_str),
-            2 => match self.address_mode {
-                Implied => unreachable!("{:?}", self),
-                Immediate => format!("{} #${:02X}", self.name_str, p.0),
-                Absolute => unreachable!("{:?}", self),
-                AbsoluteOffsetX => unreachable!("{:?}", self),
-                AbsoluteOffsetY => unreachable!("{:?}", self),
-                ZeroPage => format!("{} ${:02X} = {:02X}", self.name_str, p.0, bus.read_byte(p.word())),
-                ZeroPageOffsetX => format!("{} ${:02X},X", self.name_str, p.0),
-                ZeroPageOffsetY => format!("{} ${:02X},Y", self.name_str, p.0),
-                PCOffset => format!("{} ${:04X}", self.name_str, branch_location),
-                Indirect => unreachable!("{:?}", self),
-                PreIndirectX => format!("{} (${:02X},X)", self.name_str, p.0),
-                PostIndirectY => format!("{} (${:02X}),Y", self.name_str, p.0),
-            },
-            3 => match self.address_mode {
-                Implied => unreachable!("{:?}", self),
-                Immediate => format!("{} #${:04X}", self.name_str, p.word()),
-                Absolute => {
-                    match self.code {
-                        OpCode::JmpAbs | OpCode::Jsr => format!("{} ${:04X}", self.name_str, p.word()),
-                        _ => format!("{} ${:04X} = {:02X}", self.name_str, p.word(), bus.read_byte(p.word())),
-                    }
+            2 => {
+                match self.address_mode {
+                    Implied => unreachable!("{:?}", self),
+                    Immediate => format!("{} #${:02X}", self.name_str, p.0),
+                    Absolute => unreachable!("{:?}", self),
+                    AbsoluteOffsetX => unreachable!("{:?}", self),
+                    AbsoluteOffsetY => unreachable!("{:?}", self),
+                    ZeroPage => format!("{} ${:02X}", self.name_str, p.0),
+                    ZeroPageOffsetX => format!("{} ${:02X},X", self.name_str, p.0),
+                    ZeroPageOffsetY => format!("{} ${:02X},Y", self.name_str, p.0),
+                    PCOffset => format!("{} ${:04X}", self.name_str, branch_location),
+                    Indirect => unreachable!("{:?}", self),
+                    PreIndirectX => format!("{} (${:02X},X)", self.name_str, p.0),
+                    PostIndirectY => format!("{} (${:02X}),Y", self.name_str, p.0),
                 }
-                AbsoluteOffsetX => format!("{} ${:04X},X", self.name_str, p.word()),
-                AbsoluteOffsetY => format!("{} ${:04X},Y", self.name_str, p.word()),
-                ZeroPage => unreachable!("{:?}", self),
-                ZeroPageOffsetX => unreachable!("{:?}", self),
-                ZeroPageOffsetY => unreachable!("{:?}", self),
-                PCOffset => unreachable!("{:?}", self),
-                Indirect => format!("{} (${:04X})", self.name_str, p.word()),
-                PreIndirectX => unreachable!("{:?}", self),
-                PostIndirectY => unreachable!("{:?}", self),
+            },
+            3 => {
+                let value = bus.read_byte(self.address_mode.debug_address(p, registers, bus));
+                match self.address_mode {
+                    Implied => unreachable!("{:?}", self),
+                    Immediate => format!("{} #${:04X}", self.name_str, p.word()),
+                    Absolute => {
+                        match self.code {
+                            OpCode::JmpAbs | OpCode::Jsr => format!("{} ${:04X}", self.name_str, p.word()),
+                            _ => format!("{} ${:04X}", self.name_str, p.word()),
+                        }
+                    }
+                    AbsoluteOffsetX => format!("{} ${:04X},X", self.name_str, p.word()),
+                    AbsoluteOffsetY => format!("{} ${:04X},Y", self.name_str, p.word()),
+                    ZeroPage => unreachable!("{:?}", self),
+                    ZeroPageOffsetX => unreachable!("{:?}", self),
+                    ZeroPageOffsetY => unreachable!("{:?}", self),
+                    PCOffset => unreachable!("{:?}", self),
+                    Indirect => format!("{} (${:04X})", self.name_str, p.word()),
+                    PreIndirectX => unreachable!("{:?}", self),
+                    PostIndirectY => unreachable!("{:?}", self),
+                }
             },
             _ => panic!("Unknown op-code length: {}", self.len),
         };
 
-        format!("{:<9} {}", mem_view, instr_view)
+        format!("{:<9} {:<18}  mem[{:04X}]={:02X}  {}", mem_view, instr_view, addr, value, register_view)
     }
 }
 
