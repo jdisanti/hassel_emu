@@ -162,7 +162,7 @@ mod tests {
     fn fake_bus() -> CpuBus {
         let peripheral_bus = Rc::new(RefCell::new(PlaceholderBus::new(String::from("IO"))));
         let rom = vec![0u8; 31744];
-        CpuBus::new(&rom, peripheral_bus)
+        CpuBus::new(rom, peripheral_bus)
     }
 
     #[test]
