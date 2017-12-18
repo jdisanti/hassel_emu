@@ -471,7 +471,6 @@ impl Op {
                 }
             },
             3 => {
-                let value = bus.read_byte(self.address_mode.debug_address(p, registers, bus));
                 match self.address_mode {
                     Implied => unreachable!("{:?}", self),
                     Immediate => format!("{} #${:04X}", self.name_str, p.word()),

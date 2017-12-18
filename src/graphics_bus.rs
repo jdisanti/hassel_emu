@@ -36,9 +36,9 @@ pub struct GraphicsBus {
 
 impl GraphicsBus {
     pub fn new() -> GraphicsBus {
-        let mut frame_buffer: Vec<u32> = vec![0u32; FRAME_BUFFER_SIZE];
+        let frame_buffer: Vec<u32> = vec![0u32; FRAME_BUFFER_SIZE];
 
-        let mut bus = GraphicsBus {
+        let bus = GraphicsBus {
             frame_buffer: frame_buffer,
             next_command: IOState::Listening,
             cursor_x: 0,
@@ -47,15 +47,15 @@ impl GraphicsBus {
         bus
     }
 
-    pub fn read_byte(&self, addr: u16) -> u8 {
+    pub fn read_byte(&self, _addr: u16) -> u8 {
         0
     }
 
-    pub fn read_byte_mut(&mut self, addr: u16) -> u8 {
+    pub fn read_byte_mut(&mut self, _addr: u16) -> u8 {
         0
     }
 
-    pub fn write_byte(&mut self, addr: u16, val: u8) {
+    pub fn write_byte(&mut self, _addr: u16, val: u8) {
         self.next_command = match self.next_command {
             IOState::Listening => {
                 match val {
@@ -69,7 +69,7 @@ impl GraphicsBus {
                 }
             },
             IOState::ClearScreen => IOState::Listening,
-            IOState::SetMode { mode } => IOState::SetMode { mode: Some(val) },
+            IOState::SetMode { .. } => IOState::SetMode { mode: Some(val) },
             IOState::SetPosition { x, y } => {
                 if x.is_none() {
                     IOState::SetPosition { x: Some(val), y: y }
@@ -77,8 +77,8 @@ impl GraphicsBus {
                     IOState::SetPosition { x: x, y: Some(val) }
                 }
             },
-            IOState::SetColor { color } => IOState::SetColor { color: Some(val) },
-            IOState::SetValue { value } => IOState::SetValue { value: Some(val) },
+            IOState::SetColor { .. } => IOState::SetColor { color: Some(val) },
+            IOState::SetValue { .. } => IOState::SetValue { value: Some(val) },
             IOState::SetValuesDma { high, low, length } => {
                 if high.is_none() {
                     IOState::SetValuesDma { high: Some(val), low: low, length: length }

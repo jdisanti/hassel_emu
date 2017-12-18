@@ -9,13 +9,6 @@ use cpu::instruction::InstructionResult;
 use std::cell::RefCell;
 use std::rc::Rc;
 
-macro_rules! op_branch {
-    ($cpu:ident, $reg:ident, $op:expr, $flag:expr) => { {
-        let cond = $flag;
-        $cpu.branch_offset(&mut $reg, cond, $op.param.0);
-    } }
-}
-
 const NMI_VECTOR: u16 = 0xFFFA;
 const RESET_VECTOR: u16 = 0xFFFC;
 const IRQ_VECTOR: u16 = 0xFFFE;

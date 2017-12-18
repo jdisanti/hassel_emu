@@ -29,11 +29,11 @@ pub struct Emulator {
 impl Emulator {
     pub fn new(rom_path: &str) -> Result<Emulator, String> {
         let mut rom_file = File::open(rom_path)
-            .map_err(|e| format!("Failed to load ROM: {}", rom_path))?;
+            .map_err(|_| format!("Failed to load ROM: {}", rom_path))?;
 
         let mut rom = Vec::new();
         rom_file.read_to_end(&mut rom)
-            .map_err(|e| format!("Failed to read ROM: {}", rom_path))?;
+            .map_err(|_| format!("Failed to read ROM: {}", rom_path))?;
 
         if rom.len() != ROM_SIZE {
             return Err(format!("ROM has unexpected size ({}); should be {} bytes.", rom.len(), ROM_SIZE))
