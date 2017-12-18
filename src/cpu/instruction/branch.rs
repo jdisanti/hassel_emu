@@ -46,13 +46,12 @@ impl_instruction!(BVS => execute_bvs [_mode, params, reg, _bus, result] {
 });
 
 // TODO: unit test
-impl_instruction!(JMP_ABS => execute_jmp_abs [_mode, params, _reg, _bus, result] {
-    result.reg.pc = params.as_u16();
-});
-
-// TODO: unit test
-impl_instruction!(JMP_INDIRECT => execute_jmp_indirect [_mode, params, _reg, bus, result] {
-    result.reg.pc = Bus::read_word_mut(bus, params.as_u16());
+impl_instruction!(JMP => execute_jmp [mode, params, _reg, bus, result] {
+    match mode {
+        OpAddressMode::Absolute => result.reg.pc = params.as_u16(),
+        OpAddressMode::Indirect => result.reg.pc = Bus::read_word_mut(bus, params.as_u16()),
+        _ => unreachable!()
+    }
 });
 
 // TODO: unit test

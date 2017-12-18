@@ -152,12 +152,7 @@ impl OpDebug for Op {
                 match self.code.address_mode {
                     Implied => unreachable!("{:?}", self),
                     Immediate => format!("{} #${:04X}", self.code.name, self.param.as_u16()),
-                    Absolute => {
-                        match self.code.class {
-                            OpClass::JmpAbs | OpClass::Jsr => format!("{} ${:04X}", self.code.name, self.param.as_u16()),
-                            _ => format!("{} ${:04X}", self.code.name, self.param.as_u16()),
-                        }
-                    }
+                    Absolute => format!("{} ${:04X}", self.code.name, self.param.as_u16()),
                     AbsoluteOffsetX => format!("{} ${:04X},X", self.code.name, self.param.as_u16()),
                     AbsoluteOffsetY => format!("{} ${:04X},Y", self.code.name, self.param.as_u16()),
                     ZeroPage => unreachable!("{:?}", self),

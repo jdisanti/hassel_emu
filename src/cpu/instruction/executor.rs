@@ -88,7 +88,7 @@ fn match_impl(op_class: OpClass) -> InstructionFn {
     use cpu::instruction::transfer::{TAX, TAY, TSX, TXA, TXS, TYA};
     use cpu::instruction::compare::{BIT, CMP, CPX, CPY};
     use cpu::instruction::branch::{BCC, BCS, BEQ, BMI, BNE, BPL, BVC, BVS,
-                                   JMP_ABS, JMP_INDIRECT, JSR, RTS, RTI};
+                                   JMP, JSR, RTS, RTI};
     use cpu::instruction::bitwise::{AND, ASL, LSR, EOR, ORA, ROL, ROR};
     use cpu::instruction::arithmetic::{ADC, SBC, DEC, DEX, DEY, INC, INX, INY};
 
@@ -116,9 +116,7 @@ fn match_impl(op_class: OpClass) -> InstructionFn {
         // Branch
         Bcc => BCC, Bcs => BCS, Beq => BEQ, Bmi => BMI,
         Bne => BNE, Bpl => BPL, Bvc => BVC, Bvs => BVS,
-        JmpAbs => JMP_ABS,
-        JmpIndirect => JMP_INDIRECT,
-        Jsr => JSR, Rts => RTS, Rti => RTI,
+        Jmp => JMP, Jsr => JSR, Rts => RTS, Rti => RTI,
 
         // Bitwise
         And => AND, Asl => ASL, Lsr => LSR, Eor => EOR,
