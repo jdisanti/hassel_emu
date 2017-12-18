@@ -1,4 +1,5 @@
 extern crate minifb;
+extern crate hassel_lib6502;
 
 mod cpu;
 mod bus;

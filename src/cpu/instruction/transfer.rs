@@ -45,10 +45,10 @@ mod tests {
         use super::{TAX, TAY};
 
         reg.a = 6;
-        let result = execute(TAX, Implied, &OpParam(0, 0), reg, bus, new_result());
+        let result = execute(TAX, Implied, &OpParam::None, reg, bus, new_result());
         assert_eq!(6, result.reg.x);
 
-        let result = execute(TAY, Implied, &OpParam(0, 0), reg, bus, new_result());
+        let result = execute(TAY, Implied, &OpParam::None, reg, bus, new_result());
         assert_eq!(6, result.reg.y);
     });
 }

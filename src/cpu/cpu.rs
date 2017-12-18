@@ -1,4 +1,4 @@
-use cpu::opcode::Op;
+use cpu::opcode::{self, OpDebug};
 use bus::Bus;
 use cpu::cpu_bus::CpuBus;
 use cpu::cpu_bus::CpuBusDebugger;
@@ -104,8 +104,8 @@ impl Cpu {
     }
 
     pub fn debug_next_instruction(&mut self) -> String {
-        let op = Op::decode(&mut self.bus, self.registers.pc);
-        let opcode_str = op.debug(&self, &self.bus, self.registers.pc + op.len);
+        let op = opcode::decode_op(&mut self.bus, self.registers.pc);
+        let opcode_str = op.debug(&self, &self.bus, self.registers.pc + op.code.len as u16);
         format!("{:04X}  {:41}", self.registers.pc, opcode_str)
     }
 

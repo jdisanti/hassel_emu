@@ -48,29 +48,29 @@ mod tests {
         reg.status.set_value(0xFF);
         reg.status.set_brk(true);
 
-        let result = execute(CLC, Implied, &OpParam(0, 0), reg, bus, new_result());
+        let result = execute(CLC, Implied, &OpParam::None, reg, bus, new_result());
         assert_eq!(0xFE, result.reg.status.value());
 
-        let result = execute(CLD, Implied, &OpParam(0, 0), reg, bus, new_result());
+        let result = execute(CLD, Implied, &OpParam::None, reg, bus, new_result());
         assert_eq!(0xF7, result.reg.status.value());
 
-        let result = execute(CLI, Implied, &OpParam(0, 0), reg, bus, new_result());
+        let result = execute(CLI, Implied, &OpParam::None, reg, bus, new_result());
         assert_eq!(0xFB, result.reg.status.value());
 
-        let result = execute(CLV, Implied, &OpParam(0, 0), reg, bus, new_result());
+        let result = execute(CLV, Implied, &OpParam::None, reg, bus, new_result());
         assert_eq!(0xBF, result.reg.status.value());
     });
 
     test_instruction!(test_set_flags, SEC, [reg, bus] {
         use super::{SEC, SED, SEI};
 
-        let result = execute(SEC, Implied, &OpParam(0, 0), reg, bus, new_result());
+        let result = execute(SEC, Implied, &OpParam::None, reg, bus, new_result());
         assert_eq!(0x21, result.reg.status.value());
 
-        let result = execute(SED, Implied, &OpParam(0, 0), reg, bus, new_result());
+        let result = execute(SED, Implied, &OpParam::None, reg, bus, new_result());
         assert_eq!(0x28, result.reg.status.value());
 
-        let result = execute(SEI, Implied, &OpParam(0, 0), reg, bus, new_result());
+        let result = execute(SEI, Implied, &OpParam::None, reg, bus, new_result());
         assert_eq!(0x24, result.reg.status.value());
     });
 }

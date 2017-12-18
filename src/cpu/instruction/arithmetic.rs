@@ -1,6 +1,5 @@
 use bus::Bus;
-use cpu::opcode::OpParam;
-use cpu::opcode::OpAddressMode;
+use cpu::opcode::{CpuAddressMode, OpAddressMode, OpParam};
 use cpu::registers::Registers;
 use cpu::instruction::executor::InstructionResult;
 use cpu::instruction::executor::InstructionFn;
@@ -86,7 +85,7 @@ mod tests {
 
     test_instruction!(test_adc_simple, ADC, [reg, bus] {
         reg.a = 1;
-        let result = execute(ADC, Immediate, &OpParam(1, 0), reg, bus, new_result());
+        let result = execute(ADC, Immediate, &OpParam::Byte(1), reg, bus, new_result());
         assert_eq!(2, result.reg.a);
         assert_eq!(false, result.reg.status.carry());
         assert_eq!(false, result.reg.status.negative());
@@ -97,7 +96,7 @@ mod tests {
     test_instruction!(test_adc_carry, ADC, [reg, bus] {
         reg.a = 1;
         reg.status.set_carry(true);
-        let result = execute(ADC, Immediate, &OpParam(1, 0), reg, bus, new_result());
+        let result = execute(ADC, Immediate, &OpParam::Byte(1), reg, bus, new_result());
         assert_eq!(3, result.reg.a);
         assert_eq!(false, result.reg.status.carry());
         assert_eq!(false, result.reg.status.negative());
@@ -107,7 +106,7 @@ mod tests {
 
     test_instruction!(test_adc_carry_and_zero, ADC, [reg, bus] {
         reg.a = 0xFF;
-        let result = execute(ADC, Immediate, &OpParam(1, 0), reg, bus, new_result());
+        let result = execute(ADC, Immediate, &OpParam::Byte(1), reg, bus, new_result());
         assert_eq!(0, result.reg.a);
         assert_eq!(true, result.reg.status.carry());
         assert_eq!(false, result.reg.status.negative());
@@ -117,7 +116,7 @@ mod tests {
 
     test_instruction!(test_adc_negative, ADC, [reg, bus] {
         reg.a = 0x01;
-        let result = execute(ADC, Immediate, &OpParam(0xF0, 0), reg, bus, new_result());
+        let result = execute(ADC, Immediate, &OpParam::Byte(0xF0), reg, bus, new_result());
         assert_eq!(0xF1, result.reg.a);
         assert_eq!(false, result.reg.status.carry());
         assert_eq!(true, result.reg.status.negative());
@@ -127,7 +126,7 @@ mod tests {
 
     test_instruction!(test_adc_overflow, ADC, [reg, bus] {
         reg.a = 0x01;
-        let result = execute(ADC, Immediate, &OpParam(0x7F, 0), reg, bus, new_result());
+        let result = execute(ADC, Immediate, &OpParam::Byte(0x7F), reg, bus, new_result());
         assert_eq!(0x80, result.reg.a);
         assert_eq!(false, result.reg.status.carry());
         assert_eq!(true, result.reg.status.negative());
@@ -138,7 +137,7 @@ mod tests {
     test_instruction!(test_sbc_simple, SBC, [reg, bus] {
         reg.a = 5;
         reg.status.set_carry(true);
-        let result = execute(SBC, Immediate, &OpParam(1, 0), reg, bus, new_result());
+        let result = execute(SBC, Immediate, &OpParam::Byte(1), reg, bus, new_result());
         assert_eq!(4, result.reg.a);
         assert_eq!(true, result.reg.status.carry());
         assert_eq!(false, result.reg.status.negative());
@@ -149,7 +148,7 @@ mod tests {
     test_instruction!(test_sbc_carry, SBC, [reg, bus] {
         reg.a = 5;
         reg.status.set_carry(false);
-        let result = execute(SBC, Immediate, &OpParam(1, 0), reg, bus, new_result());
+        let result = execute(SBC, Immediate, &OpParam::Byte(1), reg, bus, new_result());
         assert_eq!(3, result.reg.a);
         assert_eq!(true, result.reg.status.carry());
         assert_eq!(false, result.reg.status.negative());
@@ -160,7 +159,7 @@ mod tests {
     test_instruction!(test_sbc_negative, SBC, [reg, bus] {
         reg.a = 1;
         reg.status.set_carry(true);
-        let result = execute(SBC, Immediate, &OpParam(2, 0), reg, bus, new_result());
+        let result = execute(SBC, Immediate, &OpParam::Byte(2), reg, bus, new_result());
         assert_eq!(0xFF, result.reg.a);
         assert_eq!(false, result.reg.status.carry());
         assert_eq!(true, result.reg.status.negative());
@@ -171,7 +170,7 @@ mod tests {
     test_instruction!(test_sbc_overflow, SBC, [reg, bus] {
         reg.a = 1;
         reg.status.set_carry(true);
-        let result = execute(SBC, Immediate, &OpParam(0x80, 0), reg, bus, new_result());
+        let result = execute(SBC, Immediate, &OpParam::Byte(0x80), reg, bus, new_result());
         assert_eq!(0x81, result.reg.a);
         assert_eq!(false, result.reg.status.carry());
         assert_eq!(true, result.reg.status.negative());
@@ -182,7 +181,7 @@ mod tests {
     test_instruction!(test_sbc_overflow_carry, SBC, [reg, bus] {
         reg.a = 1;
         reg.status.set_carry(false);
-        let result = execute(SBC, Immediate, &OpParam(0x80, 0), reg, bus, new_result());
+        let result = execute(SBC, Immediate, &OpParam::Byte(0x80), reg, bus, new_result());
         assert_eq!(0x80, result.reg.a);
         assert_eq!(false, result.reg.status.carry());
         assert_eq!(true, result.reg.status.negative());

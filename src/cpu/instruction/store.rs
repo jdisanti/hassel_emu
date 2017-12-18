@@ -1,6 +1,5 @@
 use bus::Bus;
-use cpu::opcode::OpParam;
-use cpu::opcode::OpAddressMode;
+use cpu::opcode::{CpuAddressMode, OpAddressMode, OpParam};
 use cpu::registers::Registers;
 use cpu::instruction::executor::InstructionResult;
 use cpu::instruction::executor::InstructionFn;

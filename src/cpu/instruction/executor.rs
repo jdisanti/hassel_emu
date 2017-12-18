@@ -1,8 +1,5 @@
-use cpu::opcode::Op;
-use cpu::opcode::OpCode;
-use cpu::opcode::OpParam;
-use cpu::opcode::OpAddressMode;
 use bus::Bus;
+use cpu::opcode::{self, Op, OpAddressMode, OpClass, OpParam};
 use cpu::registers::Registers;
 
 use std::collections::HashMap;
@@ -59,11 +56,10 @@ impl Executor {
     pub fn execute_instruction(&mut self, reg: &Registers, bus: &mut Bus,
             mut result: InstructionResult) -> InstructionResult {
         if !self.instruction_cache.contains_key(&reg.pc) {
-            let op = Op::decode(bus, reg.pc);
-            let code = op.code;
+            let op = opcode::decode_op(bus, reg.pc);
             self.instruction_cache.insert(reg.pc, Instruction {
                 op: op,
-                func: match_impl(code),
+                func: match_impl(op.code.class),
             });
         }
 
@@ -72,16 +68,16 @@ impl Executor {
 
         result.writes.clear();
         result.reg = *reg;
-        result.reg.pc += op.len;
-        result.cycles = op.base_cycles as usize;
+        result.reg.pc += op.code.len as u16;
+        result.cycles = op.code.base_cycles as usize;
 
         let reg = result.reg;
-        (instruction.func)(op.address_mode, &op.param, &reg, bus, result)
+        (instruction.func)(op.code.address_mode, &op.param, &reg, bus, result)
     }
 }
 
-fn match_impl(op_code: OpCode) -> InstructionFn {
-    use cpu::opcode::OpCode::*;
+fn match_impl(op_class: OpClass) -> InstructionFn {
+    use cpu::opcode::OpClass::*;
 
     use cpu::instruction::nop::{NOP, TOP};
     use cpu::instruction::interrupt::BRK;
@@ -96,7 +92,7 @@ fn match_impl(op_code: OpCode) -> InstructionFn {
     use cpu::instruction::bitwise::{AND, ASL, LSR, EOR, ORA, ROL, ROR};
     use cpu::instruction::arithmetic::{ADC, SBC, DEC, DEX, DEY, INC, INX, INY};
 
-    match op_code {
+    match op_class {
         Nop => NOP, Top => TOP, Brk => BRK,
 
         // Flag modifiers

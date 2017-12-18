@@ -1,6 +1,5 @@
 use bus::Bus;
-use cpu::opcode::OpParam;
-use cpu::opcode::OpAddressMode;
+use cpu::opcode::{CpuAddressMode, OpAddressMode, OpParam};
 use cpu::registers::Registers;
 use cpu::instruction::executor::InstructionResult;
 use cpu::instruction::executor::InstructionFn;
@@ -21,18 +20,18 @@ mod tests {
     use cpu::registers::Registers;
 
     test_instruction!(test_execute_top_abs, TOP, [reg, bus] {
-        let result = execute(TOP, Absolute, &OpParam(0, 0), reg, bus, new_result());
+        let result = execute(TOP, Absolute, &OpParam::Word(0), reg, bus, new_result());
         assert_eq!(0, result.cycles);
     });
 
     test_instruction!(test_execute_top_abs_x_cycle, TOP, [reg, bus] {
         reg.x = 10;
-        let result = execute(TOP, AbsoluteOffsetX, &OpParam(0xFE, 0), reg, bus, new_result());
+        let result = execute(TOP, AbsoluteOffsetX, &OpParam::Word(0xFE), reg, bus, new_result());
         assert_eq!(1, result.cycles);
     });
 
     test_instruction!(test_execute_top_abs_x_no_cycle, TOP, [reg, bus] {
-        let result = execute(TOP, AbsoluteOffsetX, &OpParam(0x20, 0), reg, bus, new_result());
+        let result = execute(TOP, AbsoluteOffsetX, &OpParam::Word(0x20), reg, bus, new_result());
         assert_eq!(0, result.cycles);
     });
 }

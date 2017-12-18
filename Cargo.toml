@@ -5,3 +5,6 @@ authors = ["John DiSanti <johndisanti@gmail.com>"]
 
 [dependencies]
 minifb = "0.10"
+
+[dependencies.hassel_lib6502]
+path = "../hassel_lib6502"

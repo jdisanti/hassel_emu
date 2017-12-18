@@ -1,6 +1,5 @@
 use bus::Bus;
-use cpu::opcode::OpParam;
-use cpu::opcode::OpAddressMode;
+use cpu::opcode::{OpAddressMode, OpParam};
 use cpu::registers::Registers;
 use cpu::instruction::executor::InstructionResult;
 use cpu::instruction::executor::InstructionFn;
@@ -8,52 +7,52 @@ use cpu::instruction::common::{branch, push, pop};
 
 // TODO: unit test
 impl_instruction!(BCC => execute_bcc [_mode, params, reg, _bus, result] {
-    result = branch(!reg.status.carry(), reg, params.0, result);
+    result = branch(!reg.status.carry(), reg, params.as_u8(), result);
 });
 
 // TODO: unit test
 impl_instruction!(BCS => execute_bcs [_mode, params, reg, _bus, result] {
-    result = branch(reg.status.carry(), reg, params.0, result);
+    result = branch(reg.status.carry(), reg, params.as_u8(), result);
 });
 
 // TODO: unit test
 impl_instruction!(BEQ => execute_beq [_mode, params, reg, _bus, result] {
-    result = branch(reg.status.zero(), reg, params.0, result);
+    result = branch(reg.status.zero(), reg, params.as_u8(), result);
 });
 
 // TODO: unit test
 impl_instruction!(BMI => execute_bmi [_mode, params, reg, _bus, result] {
-    result = branch(reg.status.negative(), reg, params.0, result);
+    result = branch(reg.status.negative(), reg, params.as_u8(), result);
 });
 
 // TODO: unit test
 impl_instruction!(BNE => execute_bne [_mode, params, reg, _bus, result] {
-    result = branch(!reg.status.zero(), reg, params.0, result);
+    result = branch(!reg.status.zero(), reg, params.as_u8(), result);
 });
 
 // TODO: unit test
 impl_instruction!(BPL => execute_bpl [_mode, params, reg, _bus, result] {
-    result = branch(!reg.status.negative(), reg, params.0, result);
+    result = branch(!reg.status.negative(), reg, params.as_u8(), result);
 });
 
 // TODO: unit test
 impl_instruction!(BVC => execute_bvc [_mode, params, reg, _bus, result] {
-    result = branch(!reg.status.overflow(), reg, params.0, result);
+    result = branch(!reg.status.overflow(), reg, params.as_u8(), result);
 });
 
 // TODO: unit test
 impl_instruction!(BVS => execute_bvs [_mode, params, reg, _bus, result] {
-    result = branch(reg.status.overflow(), reg, params.0, result);
+    result = branch(reg.status.overflow(), reg, params.as_u8(), result);
 });
 
 // TODO: unit test
 impl_instruction!(JMP_ABS => execute_jmp_abs [_mode, params, _reg, _bus, result] {
-    result.reg.pc = params.word();
+    result.reg.pc = params.as_u16();
 });
 
 // TODO: unit test
 impl_instruction!(JMP_INDIRECT => execute_jmp_indirect [_mode, params, _reg, bus, result] {
-    result.reg.pc = Bus::read_word_mut(bus, params.word());
+    result.reg.pc = Bus::read_word_mut(bus, params.as_u16());
 });
 
 // TODO: unit test
@@ -61,7 +60,7 @@ impl_instruction!(JSR => execute_jsr [_mode, params, reg, _bus, result] {
     let pc = reg.pc.wrapping_sub(1);
     result = push(result, (pc >> 8) as u8);
     result = push(result, (pc & 0xFF) as u8);
-    result.reg.pc = params.word();
+    result.reg.pc = params.as_u16();
 });
 
 // TODO: unit test
