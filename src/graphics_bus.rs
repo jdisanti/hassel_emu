@@ -1,5 +1,3 @@
-use minifb::Window;
-
 use cpu::Cpu;
 
 const CHAR_WIDTH: usize = 9;
@@ -32,7 +30,6 @@ pub struct GraphicsBus {
     cursor_x: u8,
     cursor_y: u8,
 }
-
 
 impl GraphicsBus {
     pub fn new() -> GraphicsBus {
@@ -143,8 +140,8 @@ impl GraphicsBus {
         }
     }
 
-    pub fn draw(&mut self, window: &mut Window) {
-        window.update_with_buffer(&self.frame_buffer).unwrap();
+    pub fn frame_buffer(&self) -> &[u32] {
+        &self.frame_buffer
     }
 
     fn put_chr(&mut self, code_point: u8) {
