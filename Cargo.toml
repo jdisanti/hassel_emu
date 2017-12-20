@@ -1,5 +1,5 @@
 [package]
-name = "emulator"
+name = "hassel_emu"
 version = "0.1.0"
 authors = ["John DiSanti <johndisanti@gmail.com>"]
 
