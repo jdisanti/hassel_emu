@@ -43,6 +43,7 @@ impl Cpu {
     pub fn reset(&mut self) {
         let entry_point = Bus::read_word_mut(&mut self.bus, RESET_VECTOR);
         self.registers.pc = entry_point;
+        self.registers.status.set_interrupt_inhibit(true);
     }
 
     pub fn registers(&self) -> &Registers {

@@ -1,6 +1,6 @@
 use cpu::register_status::RegisterStatus;
 
-const REG_SP_INIT: u8 = 0xFD;
+const REG_SP_INIT: u8 = 0xFF;
 
 #[derive(Copy, Clone)]
 pub struct Registers {
