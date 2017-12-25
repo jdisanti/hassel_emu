@@ -50,6 +50,10 @@ impl Cpu {
         &self.registers
     }
 
+    pub fn bus(&self) -> &Bus {
+        &self.bus
+    }
+
     pub fn reg_pc(&self) -> u16 {
         self.registers.pc
     }
