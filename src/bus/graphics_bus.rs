@@ -1,4 +1,5 @@
 use cpu::Cpu;
+use super::Bus;
 
 const CHAR_WIDTH: usize = 9;
 const CHAR_HEIGHT: usize = 16;
@@ -45,15 +46,57 @@ impl GraphicsBus {
         bus
     }
 
-    pub fn read_byte(&self, _addr: u16) -> u8 {
+    pub fn frame_buffer(&self) -> &[u32] {
+        &self.frame_buffer
+    }
+
+    fn put_chr(&mut self, code_point: u8) {
+        if code_point == '\n' as u8 {
+            self.cursor_x = 0;
+            self.cursor_y += 1;
+        } else if code_point == '\r' as u8 {
+            self.cursor_x = 0;
+        } else {
+            let (x, y) = (self.cursor_x, self.cursor_y);
+            self.blit_chr(x, y, code_point);
+            self.cursor_x += 1;
+            if self.cursor_x as usize >= SCREEN_WIDTH_CHARS {
+                self.cursor_x = 0;
+                self.cursor_y += 1;
+            }
+        }
+    }
+
+    fn blit_chr(&mut self, x_chr: u8, y_chr: u8, code_point: u8) {
+        let src_start_x = (code_point as usize % FONT_CHARS_PER_ROW) * CHAR_WIDTH;
+        let src_start_y = (code_point as usize / FONT_CHARS_PER_ROW) * CHAR_HEIGHT;
+
+        let dst_start_x = x_chr as usize * CHAR_WIDTH;
+        let dst_start_y = y_chr as usize * CHAR_HEIGHT;
+
+        for row in 0..CHAR_HEIGHT {
+            for col in 0..CHAR_WIDTH {
+                let src_index = (src_start_y + row) * FONT_WIDTH + src_start_x + col;
+                let dst_index = (dst_start_y + row) * SCREEN_WIDTH_PIXELS + dst_start_x + col;
+                self.frame_buffer[dst_index as usize] = match FONT[src_index as usize] {
+                    0 => DEFAULT_BG_COLOR,
+                    _ => DEFAULT_COLOR,
+                };
+            }
+        }
+    }
+}
+
+impl Bus for GraphicsBus {
+    fn read_byte(&self, _addr: u16) -> u8 {
         0
     }
 
-    pub fn read_byte_mut(&mut self, _addr: u16) -> u8 {
+    fn read_byte_mut(&mut self, _addr: u16) -> u8 {
         0
     }
 
-    pub fn write_byte(&mut self, _addr: u16, val: u8) {
+    fn write_byte(&mut self, _addr: u16, val: u8) {
         self.next_command = match self.next_command {
             IOState::Listening => {
                 match val {
@@ -89,7 +132,7 @@ impl GraphicsBus {
         };
     }
 
-    pub fn execute_peripheral_operations(&mut self, cpu: &mut Cpu) {
+    fn step(&mut self, cpu: &mut Cpu) {
         match self.next_command {
             IOState::Listening => { },
             IOState::ClearScreen => {
@@ -132,46 +175,6 @@ impl GraphicsBus {
                     self.next_command = IOState::Listening;
                 }
             },
-        }
-    }
-
-    pub fn frame_buffer(&self) -> &[u32] {
-        &self.frame_buffer
-    }
-
-    fn put_chr(&mut self, code_point: u8) {
-        if code_point == '\n' as u8 {
-            self.cursor_x = 0;
-            self.cursor_y += 1;
-        } else if code_point == '\r' as u8 {
-            self.cursor_x = 0;
-        } else {
-            let (x, y) = (self.cursor_x, self.cursor_y);
-            self.blit_chr(x, y, code_point);
-            self.cursor_x += 1;
-            if self.cursor_x as usize >= SCREEN_WIDTH_CHARS {
-                self.cursor_x = 0;
-                self.cursor_y += 1;
-            }
-        }
-    }
-
-    fn blit_chr(&mut self, x_chr: u8, y_chr: u8, code_point: u8) {
-        let src_start_x = (code_point as usize % FONT_CHARS_PER_ROW) * CHAR_WIDTH;
-        let src_start_y = (code_point as usize / FONT_CHARS_PER_ROW) * CHAR_HEIGHT;
-
-        let dst_start_x = x_chr as usize * CHAR_WIDTH;
-        let dst_start_y = y_chr as usize * CHAR_HEIGHT;
-
-        for row in 0..CHAR_HEIGHT {
-            for col in 0..CHAR_WIDTH {
-                let src_index = (src_start_y + row) * FONT_WIDTH + src_start_x + col;
-                let dst_index = (dst_start_y + row) * SCREEN_WIDTH_PIXELS + dst_start_x + col;
-                self.frame_buffer[dst_index as usize] = match FONT[src_index as usize] {
-                    0 => DEFAULT_BG_COLOR,
-                    _ => DEFAULT_COLOR,
-                };
-            }
         }
     }
 }
