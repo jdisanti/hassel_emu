@@ -18,6 +18,6 @@ impl_instruction!(BRK => execute_brk [_mode, _params, reg, bus, result] {
 
     result.reg.status.set_brk(true);
 
-    let addr = Bus::read_word_mut(bus, BRK_VECTOR);
+    let addr = Bus::read_word(bus, BRK_VECTOR);
     result.reg.pc = addr;
 });

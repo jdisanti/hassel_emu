@@ -1,4 +1,3 @@
-use cpu::opcode::{self, OpDebug};
 use bus::Bus;
 use cpu::cpu_bus::CpuBus;
 use cpu::cpu_bus::CpuBusDebugger;
@@ -41,7 +40,7 @@ impl Cpu {
     }
 
     pub fn reset(&mut self) {
-        let entry_point = Bus::read_word_mut(&mut self.bus, RESET_VECTOR);
+        let entry_point = self.bus.read_word(RESET_VECTOR);
         self.registers.pc = entry_point;
         self.registers.status.set_interrupt_inhibit(true);
     }
@@ -82,7 +81,7 @@ impl Cpu {
 
     pub fn interrupt_request(&mut self) -> bool {
         if !self.registers.status.interrupt_inhibit() {
-            let interrupt_addr = Bus::read_word_mut(&mut self.bus, IRQ_VECTOR);
+            let interrupt_addr = Bus::read_word(&mut self.bus, IRQ_VECTOR);
             self.interrupt(interrupt_addr);
             true
         } else {
@@ -91,7 +90,7 @@ impl Cpu {
     }
 
     pub fn nmi_interrupt(&mut self) {
-        let nmi_addr = Bus::read_word_mut(&mut self.bus, NMI_VECTOR);
+        let nmi_addr = Bus::read_word(&mut self.bus, NMI_VECTOR);
         self.interrupt(nmi_addr);
     }
 
@@ -99,19 +98,13 @@ impl Cpu {
         self.dma_buffer.clear();
         for i in 0..dma_size {
             let addr = dma_addr.wrapping_add(i);
-            self.dma_buffer.push(self.bus.read_byte_mut(addr));
+            self.dma_buffer.push(self.bus.read_byte(addr));
         }
         &self.dma_buffer[..]
     }
 
     pub fn debugger(&self) -> &RefCell<CpuBusDebugger> {
         self.bus.debugger()
-    }
-
-    pub fn debug_next_instruction(&mut self) -> String {
-        let op = opcode::decode_op(&mut self.bus, self.registers.pc);
-        let opcode_str = op.debug(&self, &self.bus, self.registers.pc + op.code.len as u16);
-        format!("{:04X}  {:41}", self.registers.pc, opcode_str)
     }
 
     pub fn next_instruction(&mut self) -> usize {

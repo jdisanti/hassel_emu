@@ -42,7 +42,7 @@ impl_instruction!(SBC => execute_sbc [mode, params, reg, bus, result] {
 // TODO: unit test
 impl_instruction!(DEC => execute_dec [mode, params, reg, bus, result] {
     let address = mode.address(params, reg, bus).1;
-    let val = bus.read_byte_mut(address).wrapping_sub(1);
+    let val = bus.read_byte(address).wrapping_sub(1);
     result.reg.status.set_nz_from(val);
     result.writes.push(Write::new(address, val));
 });
@@ -60,7 +60,7 @@ impl_instruction!(DEY => execute_dey [_mode, _params, reg, _bus, result] {
 // TODO: unit test
 impl_instruction!(INC => execute_inc [mode, params, reg, bus, result] {
     let address = mode.address(params, reg, bus).1;
-    let val = bus.read_byte_mut(address).wrapping_add(1);
+    let val = bus.read_byte(address).wrapping_add(1);
     result.reg.status.set_nz_from(val);
     result.writes.push(Write::new(address, val));
 });

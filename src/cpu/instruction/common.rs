@@ -64,7 +64,7 @@ pub fn push(mut result: InstructionResult, val: u8) -> InstructionResult {
 #[inline]
 pub fn pop(result: &mut InstructionResult, bus: &mut Bus) -> u8 {
     result.reg.sp = result.reg.sp.wrapping_add(1);
-    bus.read_byte_mut(STACK_ADDR + result.reg.sp as u16)
+    bus.read_byte(STACK_ADDR + result.reg.sp as u16)
 }
 
 // TODO: unit test

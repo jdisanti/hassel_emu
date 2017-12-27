@@ -6,62 +6,82 @@ mod peripheral_bus;
 pub use self::graphics_bus::GraphicsBus;
 pub use self::peripheral_bus::PeripheralBus;
 
-pub trait Bus {
-    // There's a mutable read for peripherals such as the PPU and Input
-    // because reading some of their registers causes a state change.
-    // For the most part, read_byte_mut should be used.
-    fn read_byte(&self, addr: u16) -> u8;
-    fn read_byte_mut(&mut self, addr: u16) -> u8;
-
-    fn write_byte(&mut self, addr: u16, val: u8);
-
-    fn step(&mut self, cpu: &mut Cpu);
+macro_rules! read_word {
+    ($bus:ident, $addr:expr) => {
+        {
+            let lsb = $bus.read_byte($addr as u16);
+            let msb = $bus.read_byte($addr.wrapping_add(1) as u16);
+            (msb as u16) << 8 | (lsb as u16)
+        }
+    }
 }
 
-impl Bus {
-    pub fn read_word(bus: &Bus, addr: u16) -> u16 {
-        let lsb = bus.read_byte(addr);
-        let msb = bus.read_byte(addr.wrapping_add(1));
-        (msb as u16) << 8 | (lsb as u16)
+pub trait BusDebugView {
+    fn read_byte(&self, addr: u16) -> u8;
+
+    fn read_word(&self, addr: u16) -> u16 {
+        read_word!(self, addr)
     }
 
-    pub fn read_word_zero_page(bus: &Bus, addr: u8) -> u16 {
-        let lsb = bus.read_byte(addr as u16);
-        let msb = bus.read_byte(addr.wrapping_add(1) as u16);
-        (msb as u16) << 8 | (lsb as u16)
+    fn read_word_zero_page(&self, addr: u8) -> u16 {
+        read_word!(self, addr)
+    }
+}
+
+pub trait Bus {
+    fn debug_view(&self) -> &BusDebugView;
+
+    // There's a mutable read for peripherals because
+    // reading their registers can cause a state change
+    // as an expected part of how the hardware behaves
+    fn read_byte(&mut self, addr: u16) -> u8;
+    fn write_byte(&mut self, addr: u16, val: u8);
+    fn step(&mut self, cpu: &mut Cpu);
+
+    fn read_word(&mut self, addr: u16) -> u16 {
+        read_word!(self, addr)
     }
 
-    pub fn read_word_mut(bus: &mut Bus, addr: u16) -> u16 {
-        let lsb = bus.read_byte_mut(addr);
-        let msb = bus.read_byte_mut(addr.wrapping_add(1));
-        (msb as u16) << 8 | (lsb as u16)
+    fn read_word_zero_page(&mut self, addr: u8) -> u16 {
+        read_word!(self, addr)
     }
+}
 
-    pub fn read_word_zero_page_mut(bus: &mut Bus, addr: u8) -> u16 {
-        let lsb = bus.read_byte_mut(addr as u16);
-        let msb = bus.read_byte_mut(addr.wrapping_add(1) as u16);
-        (msb as u16) << 8 | (lsb as u16)
+pub struct NullBusDebugView {
+}
+
+impl NullBusDebugView {
+    pub fn new() -> NullBusDebugView {
+        NullBusDebugView { }
+    }
+}
+
+impl BusDebugView for NullBusDebugView {
+    fn read_byte(&self, _addr: u16) -> u8 {
+        0
     }
 }
 
 pub struct PlaceholderBus {
+    debug_view: NullBusDebugView,
     name: String,
 }
 
 impl PlaceholderBus {
     pub fn new(name: String) -> PlaceholderBus {
         PlaceholderBus {
+            debug_view: NullBusDebugView::new(),
             name: name,
         }
     }
 }
 
 impl Bus for PlaceholderBus {
-    fn read_byte(&self, _addr: u16) -> u8 {
-        0
+    fn debug_view(&self) -> &BusDebugView {
+        &self.debug_view
     }
 
-    fn read_byte_mut(&mut self, addr: u16) -> u8 {
+    fn read_byte(&mut self, addr: u16) -> u8 {
         println!("WARN: Read byte from placeholder {} bus at {:04X}", self.name, addr);
         0
     }
@@ -76,6 +96,7 @@ impl Bus for PlaceholderBus {
 
 #[cfg(test)]
 pub struct TestBus {
+    debug_view: NullBusDebugView,
     mem: Vec<u8>,
 }
 
@@ -83,6 +104,7 @@ pub struct TestBus {
 impl TestBus {
     pub fn new() -> TestBus {
         TestBus {
+            debug_view: NullBusDebugView::new(),
             mem: Vec::new(),
         }
     }
@@ -90,16 +112,11 @@ impl TestBus {
 
 #[cfg(test)]
 impl Bus for TestBus {
-    fn read_byte(&self, addr: u16) -> u8 {
-        let addr = addr as usize;
-        if self.mem.len() <= addr {
-            0
-        } else {
-            self.mem[addr]
-        }
+    fn debug_view(&self) -> &BusDebugView {
+        &self.debug_view
     }
 
-    fn read_byte_mut(&mut self, addr: u16) -> u8 {
+    fn read_byte(&mut self, addr: u16) -> u8 {
         let addr = addr as usize;
         if self.mem.len() <= addr {
             self.mem.resize(addr + 1, 0u8);

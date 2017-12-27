@@ -1,4 +1,4 @@
-use bus::Bus;
+use bus::{Bus, BusDebugView};
 use cpu::Cpu;
 
 use std::cell::RefCell;
@@ -114,26 +114,30 @@ impl CpuBus {
     }
 }
 
-impl Bus for CpuBus {
+impl BusDebugView for CpuBus {
     fn read_byte(&self, addr: u16) -> u8 {
-        self.debugger.borrow_mut().read(addr);
-
         let addr: usize = addr as usize;
         match addr {
             RAM_START...RAM_END_INCL => self.ram[addr],
-            IO_START...IO_END_INCL => self.peripheral_bus.borrow().read_byte(addr as u16),
+            IO_START...IO_END_INCL => self.peripheral_bus.borrow().debug_view().read_byte(addr as u16),
             ROM_START...ROM_END_INCL => self.rom[addr - ROM_START],
             _ => { 0 }
         }
     }
+}
 
-    fn read_byte_mut(&mut self, addr: u16) -> u8 {
+impl Bus for CpuBus {
+    fn debug_view(&self) -> &BusDebugView {
+        self
+    }
+
+    fn read_byte(&mut self, addr: u16) -> u8 {
         self.debugger.borrow_mut().read(addr);
 
         let addr: usize = addr as usize;
         match addr {
             RAM_START...RAM_END_INCL => self.ram[addr],
-            IO_START...IO_END_INCL => self.peripheral_bus.borrow_mut().read_byte_mut(addr as u16),
+            IO_START...IO_END_INCL => self.peripheral_bus.borrow_mut().read_byte(addr as u16),
             ROM_START...ROM_END_INCL => self.rom[addr - ROM_START],
             _ => { 0 }
         }
@@ -174,6 +178,6 @@ mod tests {
         let mut bus = fake_bus();
         bus.write_byte(0x500, 0x01);
         bus.write_byte(0x501, 0x02);
-        assert_eq!(0x0201, Bus::read_word_mut(&mut bus, 0x500));
+        assert_eq!(0x0201, bus.read_word(0x500));
     }
 }

@@ -1,5 +1,5 @@
 use cpu::Cpu;
-use super::Bus;
+use super::{Bus, BusDebugView, NullBusDebugView};
 
 const CHAR_WIDTH: usize = 9;
 const CHAR_HEIGHT: usize = 16;
@@ -27,6 +27,7 @@ enum IOState {
 }
 
 pub struct GraphicsBus {
+    debug_view: NullBusDebugView,
     frame_buffer: Vec<u32>,
     next_command: IOState,
     cursor_x: u8,
@@ -38,6 +39,7 @@ impl GraphicsBus {
         let frame_buffer: Vec<u32> = vec![DEFAULT_BG_COLOR; FRAME_BUFFER_SIZE];
 
         let bus = GraphicsBus {
+            debug_view: NullBusDebugView::new(),
             frame_buffer: frame_buffer,
             next_command: IOState::Listening,
             cursor_x: 0,
@@ -88,11 +90,11 @@ impl GraphicsBus {
 }
 
 impl Bus for GraphicsBus {
-    fn read_byte(&self, _addr: u16) -> u8 {
-        0
+    fn debug_view(&self) -> &BusDebugView {
+        &self.debug_view
     }
 
-    fn read_byte_mut(&mut self, _addr: u16) -> u8 {
+    fn read_byte(&mut self, _addr: u16) -> u8 {
         0
     }
 

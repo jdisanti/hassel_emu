@@ -2,32 +2,34 @@ use std::cell::RefCell;
 use std::rc::Rc;
 
 use cpu::Cpu;
-use super::Bus;
+use super::{Bus, BusDebugView, NullBusDebugView};
 use super::graphics_bus::GraphicsBus;
 
 const GRAPHICS_REGISTER_ADDRESS: u16 = 0xDFFE;
 const IO_REGISTER_ADDRESS: u16 = 0xDFFF;
 
 pub struct PeripheralBus {
+    debug_view: NullBusDebugView,
     graphics_bus: Rc<RefCell<GraphicsBus>>,
 }
 
 impl PeripheralBus {
     pub fn new(graphics_bus: Rc<RefCell<GraphicsBus>>) -> PeripheralBus {
         PeripheralBus {
+            debug_view: NullBusDebugView::new(),
             graphics_bus: graphics_bus
         }
     }
 }
 
 impl Bus for PeripheralBus {
-    fn read_byte(&self, _addr: u16) -> u8 {
-        0
+    fn debug_view(&self) -> &BusDebugView {
+        &self.debug_view
     }
 
-    fn read_byte_mut(&mut self, addr: u16) -> u8 {
+    fn read_byte(&mut self, addr: u16) -> u8 {
         if addr == GRAPHICS_REGISTER_ADDRESS {
-            self.graphics_bus.borrow_mut().read_byte_mut(addr)
+            self.graphics_bus.borrow_mut().read_byte(addr)
         } else if addr == IO_REGISTER_ADDRESS {
             // TODO
             0

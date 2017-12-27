@@ -7,7 +7,7 @@ use cpu::instruction::common::compare;
 
 // TODO: unit test
 impl_instruction!(BIT => execute_bit [_mode, params, reg, bus, result] {
-    let mem = bus.read_byte_mut(params.as_u16());
+    let mem = bus.read_byte(params.as_u16());
     let val = reg.a & mem;
     result.reg.status.set_negative((mem & 0x80) > 0);
     result.reg.status.set_overflow((mem & 0x40) > 0);

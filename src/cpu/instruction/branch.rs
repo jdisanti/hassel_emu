@@ -49,7 +49,7 @@ impl_instruction!(BVS => execute_bvs [_mode, params, reg, _bus, result] {
 impl_instruction!(JMP => execute_jmp [mode, params, _reg, bus, result] {
     match mode {
         OpAddressMode::Absolute => result.reg.pc = params.as_u16(),
-        OpAddressMode::Indirect => result.reg.pc = Bus::read_word_mut(bus, params.as_u16()),
+        OpAddressMode::Indirect => result.reg.pc = Bus::read_word(bus, params.as_u16()),
         _ => unreachable!()
     }
 });
