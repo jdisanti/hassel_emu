@@ -1,6 +1,7 @@
 use std::cell::RefCell;
 use std::rc::Rc;
 
+use cpu::Cpu;
 use graphics_bus::GraphicsBus;
 
 pub trait Bus {
@@ -11,6 +12,8 @@ pub trait Bus {
     fn read_byte_mut(&mut self, addr: u16) -> u8;
 
     fn write_byte(&mut self, addr: u16, val: u8);
+
+    fn step(&mut self, cpu: &mut Cpu);
 }
 
 impl Bus {
@@ -80,6 +83,10 @@ impl Bus for PeripheralBus {
             println!("WARN: PeripheralBus called with non-peripheral address 0x{:04X}", addr);
         }
     }
+
+    fn step(&mut self, cpu: &mut Cpu) {
+        self.graphics_bus.borrow_mut().execute_peripheral_operations(cpu);
+    }
 }
 
 pub struct PlaceholderBus {
@@ -106,6 +113,9 @@ impl Bus for PlaceholderBus {
 
     fn write_byte(&mut self, addr: u16, val: u8) {
         println!("WARN: {:02X} written to placeholder {} bus at {:04X}", val, self.name, addr);
+    }
+
+    fn step(&mut self, _cpu: &mut Cpu) {
     }
 }
 
@@ -148,5 +158,8 @@ impl Bus for TestBus {
             self.mem.resize(addr + 1, 0u8);
         }
         self.mem[addr] = val;
+    }
+
+    fn step(&mut self, _cpu: &mut Cpu) {
     }
 }

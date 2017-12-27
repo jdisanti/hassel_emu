@@ -4,14 +4,15 @@ const CHAR_WIDTH: usize = 9;
 const CHAR_HEIGHT: usize = 16;
 const SCREEN_WIDTH_CHARS: usize = 71;
 const SCREEN_HEIGHT_CHARS: usize = 30;
-pub const SCREEN_WIDTH_PIXELS: usize = CHAR_WIDTH * SCREEN_WIDTH_CHARS;
-pub const SCREEN_HEIGHT_PIXELS: usize = CHAR_HEIGHT * SCREEN_HEIGHT_CHARS;
+pub const SCREEN_WIDTH_PIXELS: usize = 640;
+pub const SCREEN_HEIGHT_PIXELS: usize = 480;
 const FRAME_BUFFER_SIZE: usize = SCREEN_WIDTH_PIXELS * SCREEN_HEIGHT_PIXELS;
 
 const FONT: &'static [u8] = include_bytes!("./vga_font_glyph9x16_image288x128_monochrome.data");
 const FONT_WIDTH: usize = 288;
 const FONT_CHARS_PER_ROW: usize = FONT_WIDTH / CHAR_WIDTH;
 const DEFAULT_COLOR: u32 = 0xFFADAAAD;
+const DEFAULT_BG_COLOR: u32 = 0xFF000000;
 
 enum IOState {
     Listening,
@@ -33,7 +34,7 @@ pub struct GraphicsBus {
 
 impl GraphicsBus {
     pub fn new() -> GraphicsBus {
-        let frame_buffer: Vec<u32> = vec![0u32; FRAME_BUFFER_SIZE];
+        let frame_buffer: Vec<u32> = vec![DEFAULT_BG_COLOR; FRAME_BUFFER_SIZE];
 
         let bus = GraphicsBus {
             frame_buffer: frame_buffer,
@@ -92,14 +93,12 @@ impl GraphicsBus {
         match self.next_command {
             IOState::Listening => { },
             IOState::ClearScreen => {
-                println!("Cleared screen");
-                self.frame_buffer = vec![0u32; FRAME_BUFFER_SIZE];
+                self.frame_buffer = vec![DEFAULT_BG_COLOR; FRAME_BUFFER_SIZE];
                 self.next_command = IOState::Listening;
             },
             IOState::SetMode { mode } => {
                 if mode.is_some() {
                     // TODO: set the mode
-                    println!("Set graphics mode to {}", mode.unwrap());
                     self.next_command = IOState::Listening;
                 }
             },
@@ -107,20 +106,17 @@ impl GraphicsBus {
                 if x.is_some() && y.is_some() {
                     self.cursor_x = x.unwrap();
                     self.cursor_y = y.unwrap();
-                    println!("Set position to {}, {}", self.cursor_x, self.cursor_y);
                     self.next_command = IOState::Listening;
                 }
             },
             IOState::SetColor { color } => {
                 if color.is_some() {
                     // TODO: set the color
-                    println!("Set color to {}", color.unwrap());
                     self.next_command = IOState::Listening;
                 }
             },
             IOState::SetValue { value } => {
                 if value.is_some() {
-                    println!("Put character '{}' at {}, {}", value.unwrap() as char, self.cursor_x, self.cursor_y);
                     self.put_chr(value.unwrap());
                     self.next_command = IOState::Listening;
                 }
@@ -129,7 +125,6 @@ impl GraphicsBus {
                 if high.is_some() && low.is_some() && length.is_some() {
                     // TODO: DMA and display
                     let addr = ((high.unwrap() as u16) << 8) + low.unwrap() as u16;
-                    println!("DMAing {} bytes from 0x{:04X} to VRAM", length.unwrap(), addr);
                     let slice = cpu.dma_slice(addr, length.unwrap() as u16);
                     for chr in slice {
                         self.put_chr(*chr);
@@ -173,7 +168,7 @@ impl GraphicsBus {
                 let src_index = (src_start_y + row) * FONT_WIDTH + src_start_x + col;
                 let dst_index = (dst_start_y + row) * SCREEN_WIDTH_PIXELS + dst_start_x + col;
                 self.frame_buffer[dst_index as usize] = match FONT[src_index as usize] {
-                    0 => 0,
+                    0 => DEFAULT_BG_COLOR,
                     _ => DEFAULT_COLOR,
                 };
             }

@@ -1,4 +1,5 @@
 use bus::Bus;
+use cpu::Cpu;
 
 use std::cell::RefCell;
 use std::rc::Rc;
@@ -148,6 +149,9 @@ impl Bus for CpuBus {
             ROM_START...ROM_END_INCL => panic!("Attempted to write to ROM location: 0x{:04X}", addr),
             _ => panic!("Unknown write memory location: 0x{:04X}", addr)
         }
+    }
+
+    fn step(&mut self, _cpu: &mut Cpu) {
     }
 }
 
