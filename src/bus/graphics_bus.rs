@@ -15,6 +15,13 @@ const FONT_CHARS_PER_ROW: usize = FONT_WIDTH / CHAR_WIDTH;
 const DEFAULT_COLOR: u32 = 0xFFADAAAD;
 const DEFAULT_BG_COLOR: u32 = 0xFF000000;
 
+const CMD_CLEAR_SCREEN: u8 = 1;
+const CMD_SET_MODE: u8 = 2;
+const CMD_SET_POSITION: u8 = 3;
+const CMD_SET_COLOR: u8 = 4;
+const CMD_SET_VALUE: u8 = 5;
+const CMD_SET_VALUES_DMA: u8 = 6;
+
 enum IOState {
     Listening,
 
@@ -65,6 +72,9 @@ impl GraphicsBus {
             if self.cursor_x as usize >= SCREEN_WIDTH_CHARS {
                 self.cursor_x = 0;
                 self.cursor_y += 1;
+                if self.cursor_y as usize >= SCREEN_HEIGHT_CHARS {
+                    self.cursor_y = 0;
+                }
             }
         }
     }
@@ -80,7 +90,7 @@ impl GraphicsBus {
             for col in 0..CHAR_WIDTH {
                 let src_index = (src_start_y + row) * FONT_WIDTH + src_start_x + col;
                 let dst_index = (dst_start_y + row) * SCREEN_WIDTH_PIXELS + dst_start_x + col;
-                self.frame_buffer[dst_index as usize] = match FONT[src_index as usize] {
+                self.frame_buffer[dst_index] = match FONT[src_index] {
                     0 => DEFAULT_BG_COLOR,
                     _ => DEFAULT_COLOR,
                 };
@@ -102,12 +112,12 @@ impl Bus for GraphicsBus {
         self.next_command = match self.next_command {
             IOState::Listening => {
                 match val {
-                    0x01 => IOState::ClearScreen,
-                    0x02 => IOState::SetMode { mode: None },
-                    0x03 => IOState::SetPosition { x: None, y: None },
-                    0x04 => IOState::SetColor { color: None },
-                    0x05 => IOState::SetValue { value: None },
-                    0x06 => IOState::SetValuesDma { high: None, low: None, length: None },
+                    CMD_CLEAR_SCREEN => IOState::ClearScreen,
+                    CMD_SET_MODE => IOState::SetMode { mode: None },
+                    CMD_SET_POSITION => IOState::SetPosition { x: None, y: None },
+                    CMD_SET_COLOR => IOState::SetColor { color: None },
+                    CMD_SET_VALUE => IOState::SetValue { value: None },
+                    CMD_SET_VALUES_DMA => IOState::SetValuesDma { high: None, low: None, length: None },
                     _ => IOState::Listening,
                 }
             },
@@ -177,6 +187,36 @@ impl Bus for GraphicsBus {
                     self.next_command = IOState::Listening;
                 }
             },
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    pub fn test_render_out_of_bounds() {
+        // Expectation: writing out of bounds should not crash
+        let address_doesnt_matter = 0;
+        let mut bus = GraphicsBus::new();
+        for y in 0..256 {
+            for x in 0..256 {
+                bus.write_byte(address_doesnt_matter, CMD_SET_POSITION);
+                bus.write_byte(address_doesnt_matter, x as u8);
+                bus.write_byte(address_doesnt_matter, y as u8);
+                bus.write_byte(address_doesnt_matter, CMD_SET_VALUE);
+                bus.write_byte(address_doesnt_matter, 'h' as u8);
+            }
+        }
+
+        bus.write_byte(address_doesnt_matter, CMD_SET_POSITION);
+        bus.write_byte(address_doesnt_matter, 0);
+        bus.write_byte(address_doesnt_matter, 0);
+
+        for _ in 0..(SCREEN_WIDTH_CHARS * SCREEN_HEIGHT_CHARS + 1) {
+            bus.write_byte(address_doesnt_matter, CMD_SET_VALUE);
+            bus.write_byte(address_doesnt_matter, 'h' as u8);
         }
     }
 }
