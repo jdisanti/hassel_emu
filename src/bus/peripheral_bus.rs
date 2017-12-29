@@ -4,6 +4,7 @@ use std::rc::Rc;
 use cpu::Cpu;
 use super::{Bus, BusDebugView, NullBusDebugView};
 use super::graphics_bus::GraphicsBus;
+use super::io_bus::IOBus;
 
 const GRAPHICS_REGISTER_ADDRESS: u16 = 0xDFFE;
 const IO_REGISTER_ADDRESS: u16 = 0xDFFF;
@@ -11,13 +12,15 @@ const IO_REGISTER_ADDRESS: u16 = 0xDFFF;
 pub struct PeripheralBus {
     debug_view: NullBusDebugView,
     graphics_bus: Rc<RefCell<GraphicsBus>>,
+    io_bus: Rc<RefCell<IOBus>>,
 }
 
 impl PeripheralBus {
-    pub fn new(graphics_bus: Rc<RefCell<GraphicsBus>>) -> PeripheralBus {
+    pub fn new(graphics_bus: Rc<RefCell<GraphicsBus>>, io_bus: Rc<RefCell<IOBus>>) -> PeripheralBus {
         PeripheralBus {
             debug_view: NullBusDebugView::new(),
-            graphics_bus: graphics_bus
+            graphics_bus: graphics_bus,
+            io_bus: io_bus,
         }
     }
 }
@@ -31,8 +34,7 @@ impl Bus for PeripheralBus {
         if addr == GRAPHICS_REGISTER_ADDRESS {
             self.graphics_bus.borrow_mut().read_byte(addr)
         } else if addr == IO_REGISTER_ADDRESS {
-            // TODO
-            0
+            self.io_bus.borrow_mut().read_byte(addr)
         } else {
             println!("WARN: PeripheralBus called with non-peripheral address 0x{:04X}", addr);
             0
@@ -43,7 +45,7 @@ impl Bus for PeripheralBus {
         if addr == GRAPHICS_REGISTER_ADDRESS {
             self.graphics_bus.borrow_mut().write_byte(addr, val);
         } else if addr == IO_REGISTER_ADDRESS {
-            // TODO
+            self.io_bus.borrow_mut().write_byte(addr, val)
         } else {
             println!("WARN: PeripheralBus called with non-peripheral address 0x{:04X}", addr);
         }
@@ -51,5 +53,6 @@ impl Bus for PeripheralBus {
 
     fn step(&mut self, cpu: &mut Cpu) {
         self.graphics_bus.borrow_mut().step(cpu);
+        self.io_bus.borrow_mut().step(cpu);
     }
 }

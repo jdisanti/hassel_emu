@@ -3,6 +3,8 @@ name = "hassel_emu"
 version = "0.1.0"
 authors = ["John DiSanti <johndisanti@gmail.com>"]
 
+[dependencies]
+enum_primitive = "0.1"
+
 [dependencies.hassel_lib6502]
 path = "../hassel_lib6502"
-

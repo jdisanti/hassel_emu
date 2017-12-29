@@ -1,9 +1,13 @@
 use cpu::Cpu;
 
 mod graphics_bus;
+mod io_bus;
+mod key;
 mod peripheral_bus;
 
 pub use self::graphics_bus::GraphicsBus;
+pub use self::io_bus::IOBus;
+pub use self::key::Key;
 pub use self::peripheral_bus::PeripheralBus;
 
 macro_rules! read_word {
