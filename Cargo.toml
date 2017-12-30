@@ -4,8 +4,12 @@ version = "0.1.0"
 authors = ["John DiSanti <johndisanti@gmail.com>"]
 license = "MIT OR Apache-2.0"
 
+[features]
+default = []
+hassel_arch = ["enum_primitive"]
+
 [dependencies]
-enum_primitive = "0.1"
+enum_primitive = { version = "0.1", optional = true }
 
 [dependencies.hassel_lib6502]
 path = "../hassel_lib6502"

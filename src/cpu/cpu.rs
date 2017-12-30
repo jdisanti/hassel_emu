@@ -7,9 +7,8 @@
 // copied, modified, or distributed except according to those terms.
 //
 
-use bus::Bus;
+use cpu::bus::Bus;
 use cpu::cpu_bus::CpuBus;
-use cpu::cpu_bus::CpuBusDebugger;
 use cpu::registers::Registers;
 use cpu::instruction::Executor;
 use cpu::instruction::InstructionResult;
@@ -25,7 +24,7 @@ const STACK_ADDR: u16 = 0x0100;
 
 pub struct Cpu {
     registers: Registers,
-    pub bus: CpuBus,
+    bus: CpuBus,
 
     cycle: usize,
     dma_buffer: Vec<u8>,
@@ -62,13 +61,41 @@ impl Cpu {
         &self.bus
     }
 
-    pub fn reg_pc(&self) -> u16 {
-        self.registers.pc
+    pub fn request_interrupt(&mut self) -> bool {
+        if !self.registers.status.interrupt_inhibit() {
+            let interrupt_addr = Bus::read_word(&mut self.bus, IRQ_VECTOR);
+            self.interrupt(interrupt_addr);
+            true
+        } else {
+            false
+        }
     }
 
-    #[allow(dead_code)]
-    pub fn set_reg_pc(&mut self, val: u16) {
-        self.registers.pc = val;
+    pub fn request_non_maskable_interrupt(&mut self) {
+        let nmi_addr = Bus::read_word(&mut self.bus, NMI_VECTOR);
+        self.interrupt(nmi_addr);
+    }
+
+    pub fn dma_slice(&mut self, dma_addr: u16, dma_size: u16) -> &[u8] {
+        self.dma_buffer.clear();
+        for i in 0..dma_size {
+            let addr = dma_addr.wrapping_add(i);
+            self.dma_buffer.push(self.bus.read_byte(addr));
+        }
+        &self.dma_buffer[..]
+    }
+
+    pub fn next_instruction(&mut self) -> usize {
+        let mut result = InstructionResult::new();
+        result = self.executor.execute_instruction(&self.registers, &mut self.bus, result);
+
+        for write in &result.writes {
+            self.bus.write_byte(write.address, write.value);
+        }
+
+        self.registers = result.reg;
+        self.cycle += result.cycles;
+        result.cycles
     }
 
     #[inline]
@@ -86,48 +113,5 @@ impl Cpu {
         self.push(&mut registers, cur_status);
         registers.pc = handler_address;
         self.registers = registers;
-    }
-
-    pub fn interrupt_request(&mut self) -> bool {
-        if !self.registers.status.interrupt_inhibit() {
-            let interrupt_addr = Bus::read_word(&mut self.bus, IRQ_VECTOR);
-            self.interrupt(interrupt_addr);
-            true
-        } else {
-            false
-        }
-    }
-
-    pub fn nmi_interrupt(&mut self) {
-        let nmi_addr = Bus::read_word(&mut self.bus, NMI_VECTOR);
-        self.interrupt(nmi_addr);
-    }
-
-    pub fn dma_slice(&mut self, dma_addr: u16, dma_size: u16) -> &[u8] {
-        self.dma_buffer.clear();
-        for i in 0..dma_size {
-            let addr = dma_addr.wrapping_add(i);
-            self.dma_buffer.push(self.bus.read_byte(addr));
-        }
-        &self.dma_buffer[..]
-    }
-
-    pub fn debugger(&self) -> &RefCell<CpuBusDebugger> {
-        self.bus.debugger()
-    }
-
-    pub fn next_instruction(&mut self) -> usize {
-        self.bus.before_next_instruction();
-
-        let mut result = InstructionResult::new();
-        result = self.executor.execute_instruction(&self.registers, &mut self.bus, result);
-
-        for write in &result.writes {
-            self.bus.write_byte(write.address, write.value);
-        }
-
-        self.registers = result.reg;
-        self.cycle += result.cycles;
-        result.cycles
     }
 }

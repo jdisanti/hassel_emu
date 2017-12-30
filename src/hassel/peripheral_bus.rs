@@ -11,9 +11,9 @@ use std::cell::RefCell;
 use std::rc::Rc;
 
 use cpu::Cpu;
-use super::{Bus, BusDebugView, NullBusDebugView};
-use super::graphics_bus::GraphicsBus;
-use super::io_bus::IOBus;
+use cpu::bus::{Bus, BusDebugView, NullBusDebugView};
+use hassel::graphics_bus::GraphicsBus;
+use hassel::io_bus::IOBus;
 
 const GRAPHICS_REGISTER_ADDRESS: u16 = 0xDFFE;
 const IO_REGISTER_ADDRESS: u16 = 0xDFFF;

@@ -8,8 +8,8 @@
 //
 
 use cpu::Cpu;
-use super::{Bus, BusDebugView, NullBusDebugView};
-use super::Key;
+use cpu::bus::{Bus, BusDebugView, NullBusDebugView};
+use hassel::key::Key;
 
 const KEY_DOWN_INTERRUPT: u8 = 0x01;
 const KEY_UP_INTERRUPT: u8 = 0x02;
@@ -68,7 +68,7 @@ impl Bus for IOBus {
 
     fn step(&mut self, cpu: &mut Cpu) {
         if !self.response_queue.is_empty() && self.last_interrupt_size != self.response_queue.len() {
-            cpu.interrupt_request();
+            cpu.request_interrupt();
             self.last_interrupt_size = self.response_queue.len();
         }
     }

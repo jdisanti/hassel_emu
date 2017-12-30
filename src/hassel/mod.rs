@@ -1,5 +1,5 @@
 //
-// Copyright 2017 hassel_lib6502 Developers
+// Copyright 2017 hassel_emu Developers
 //
 // Licensed under the Apache License, Version 2.0, <LICENSE-APACHE or
 // http://apache.org/licenses/LICENSE-2.0> or the MIT license <LICENSE-MIT or
@@ -7,15 +7,12 @@
 // copied, modified, or distributed except according to those terms.
 //
 
-pub mod bus;
-mod cpu;
-mod cpu_bus;
-mod instruction;
-mod opcode;
-mod register_status;
-mod registers;
+mod graphics_bus;
+mod io_bus;
+mod key;
+mod peripheral_bus;
 
-pub use cpu::bus::{Bus, BusDebugView};
-pub use cpu::cpu::Cpu;
-pub use cpu::registers::Registers;
-pub use cpu::register_status::RegisterStatus;
+pub use self::graphics_bus::GraphicsBus;
+pub use self::io_bus::IOBus;
+pub use self::key::Key;
+pub use self::peripheral_bus::PeripheralBus;

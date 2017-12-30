@@ -8,7 +8,7 @@
 //
 
 use cpu::Cpu;
-use super::{Bus, BusDebugView, NullBusDebugView};
+use cpu::bus::{Bus, BusDebugView, NullBusDebugView};
 
 const CHAR_WIDTH: usize = 9;
 const CHAR_HEIGHT: usize = 16;

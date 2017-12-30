@@ -11,7 +11,7 @@ use std::rc::Rc;
 use std::cell::RefCell;
 
 use cpu::Cpu;
-use bus::Bus;
+use cpu::bus::Bus;
 
 pub const REQUIRED_ROM_SIZE: usize = 0x2000;
 
@@ -36,7 +36,7 @@ impl Emulator {
     }
 
     pub fn is_halted(&self) -> bool {
-        self.last_pc == self.cpu.reg_pc()
+        self.last_pc == self.cpu.registers().pc
     }
 
     pub fn reset(&mut self) {
@@ -45,7 +45,7 @@ impl Emulator {
     }
 
     pub fn step(&mut self) -> usize {
-        self.last_pc = self.cpu.reg_pc();
+        self.last_pc = self.cpu.registers().pc;
         let cycles = self.cpu.next_instruction();
         self.peripheral_bus.borrow_mut().step(&mut self.cpu);
         cycles

@@ -7,7 +7,7 @@
 // copied, modified, or distributed except according to those terms.
 //
 
-use bus::{Bus, BusDebugView};
+use cpu::bus::{Bus, BusDebugView};
 use cpu::Cpu;
 
 use std::cell::RefCell;
@@ -61,46 +61,10 @@ const ROM_END_INCL: usize = 0xFFFF;
 
 const RAM_SIZE: usize = RAM_END_INCL + 1 - RAM_START;
 
-pub struct CpuBusDebugger {
-    last_read: Vec<u16>,
-    last_written: Vec<u16>,
-}
-
-impl CpuBusDebugger {
-    pub fn new() -> CpuBusDebugger {
-        CpuBusDebugger {
-            last_read: Vec::new(),
-            last_written: Vec::new(),
-        }
-    }
-
-    pub fn read(&mut self, addr: u16) {
-        self.last_read.push(addr);
-    }
-
-    pub fn write(&mut self, addr: u16) {
-        self.last_written.push(addr);
-    }
-
-    pub fn last_written(&self) -> &Vec<u16> {
-        &self.last_written
-    }
-
-    pub fn last_read(&self) -> &Vec<u16> {
-        &self.last_read
-    }
-
-    pub fn clear(&mut self) {
-        self.last_read.clear();
-        self.last_written.clear();
-    }
-}
-
 pub struct CpuBus {
     ram: [u8; RAM_SIZE],
     rom: Vec<u8>,
     peripheral_bus: Rc<RefCell<Bus>>,
-    debugger: RefCell<CpuBusDebugger>,
 }
 
 impl CpuBus {
@@ -110,16 +74,7 @@ impl CpuBus {
             ram: [0u8; RAM_SIZE],
             rom: rom,
             peripheral_bus: peripheral_bus,
-            debugger: RefCell::new(CpuBusDebugger::new()),
         }
-    }
-
-    pub fn before_next_instruction(&self) {
-        self.debugger.borrow_mut().clear();
-    }
-
-    pub fn debugger(&self) -> &RefCell<CpuBusDebugger> {
-        &self.debugger
     }
 }
 
@@ -141,8 +96,6 @@ impl Bus for CpuBus {
     }
 
     fn read_byte(&mut self, addr: u16) -> u8 {
-        self.debugger.borrow_mut().read(addr);
-
         let addr: usize = addr as usize;
         match addr {
             RAM_START...RAM_END_INCL => self.ram[addr],
@@ -153,8 +106,6 @@ impl Bus for CpuBus {
     }
 
     fn write_byte(&mut self, addr: u16, val: u8) {
-        self.debugger.borrow_mut().write(addr);
-
         let addr: usize = addr as usize;
         match addr {
             RAM_START...RAM_END_INCL => self.ram[addr] = val,
@@ -171,7 +122,7 @@ impl Bus for CpuBus {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use bus::*;
+    use cpu::bus::*;
 
     use std::cell::RefCell;
     use std::rc::Rc;

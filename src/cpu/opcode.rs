@@ -7,7 +7,7 @@
 // copied, modified, or distributed except according to those terms.
 //
 
-use bus::Bus;
+use cpu::bus::Bus;
 use cpu::registers::Registers;
 
 pub use hassel_lib6502::{OpParam, OpAddressMode, OpClass, OpCode, Op};
@@ -91,8 +91,8 @@ pub fn decode_op(bus: &mut Bus, reg_pc: u16) -> Op {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use bus::Bus;
-    use bus::TestBus;
+    use cpu::bus::Bus;
+    use cpu::bus::TestBus;
     use cpu::registers::Registers;
 
     #[test]

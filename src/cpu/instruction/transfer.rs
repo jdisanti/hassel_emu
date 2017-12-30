@@ -7,7 +7,7 @@
 // copied, modified, or distributed except according to those terms.
 //
 
-use bus::Bus;
+use cpu::bus::Bus;
 use cpu::opcode::OpParam;
 use cpu::opcode::OpAddressMode;
 use cpu::registers::Registers;
@@ -46,7 +46,7 @@ impl_instruction!(TYA => execute_tya [_mode, _params, reg, _bus, result] {
 mod tests {
     use cpu::instruction::common::{execute, new_result};
     use cpu::opcode::OpAddressMode::*;
-    use bus::TestBus;
+    use cpu::bus::TestBus;
     use cpu::opcode::OpParam;
     use cpu::registers::Registers;
 

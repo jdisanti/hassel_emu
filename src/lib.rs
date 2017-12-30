@@ -9,9 +9,12 @@
 
 extern crate hassel_lib6502;
 
+pub mod cpu;
+pub mod emulator;
+
+#[cfg(feature = "hassel_arch")]
 #[macro_use]
 extern crate enum_primitive;
 
-pub mod cpu;
-pub mod bus;
-pub mod emulator;
+#[cfg(feature = "hassel_arch")]
+pub mod hassel;
