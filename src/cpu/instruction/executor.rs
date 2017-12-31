@@ -7,11 +7,9 @@
 // copied, modified, or distributed except according to those terms.
 //
 
-use cpu::bus::Bus;
+use cpu::memory::MemoryMap;
 use cpu::opcode::{self, Op, OpAddressMode, OpClass, OpParam};
 use cpu::registers::Registers;
-
-use std::collections::HashMap;
 
 #[derive(Copy, Clone)]
 pub struct Write {
@@ -44,7 +42,7 @@ impl InstructionResult {
     }
 }
 
-pub type InstructionFn = &'static Fn(OpAddressMode, &OpParam, &Registers, &mut Bus, InstructionResult) -> InstructionResult;
+pub type InstructionFn = &'static Fn(OpAddressMode, &OpParam, &Registers, &mut MemoryMap, InstructionResult) -> InstructionResult;
 
 struct Instruction {
     pub op: Op,
@@ -52,27 +50,22 @@ struct Instruction {
 }
 
 pub struct Executor {
-    instruction_cache: HashMap<u16, Instruction>,
 }
 
 impl Executor {
     pub fn new() -> Executor {
         Executor {
-            instruction_cache: HashMap::new(),
         }
     }
 
-    pub fn execute_instruction(&mut self, reg: &Registers, bus: &mut Bus,
+    pub fn execute_instruction(&mut self, reg: &Registers, memory: &mut MemoryMap,
             mut result: InstructionResult) -> InstructionResult {
-        if !self.instruction_cache.contains_key(&reg.pc) {
-            let op = opcode::decode_op(bus, reg.pc);
-            self.instruction_cache.insert(reg.pc, Instruction {
-                op: op,
-                func: match_impl(op.code.class),
-            });
-        }
+        let op = opcode::decode_op(memory, reg.pc);
+        let instruction = Instruction {
+            op: op,
+            func: match_impl(op.code.class),
+        };
 
-        let instruction = self.instruction_cache.get(&reg.pc).expect("cached");
         let op = instruction.op;
 
         result.writes.clear();
@@ -81,7 +74,7 @@ impl Executor {
         result.cycles = op.code.base_cycles as usize;
 
         let reg = result.reg;
-        (instruction.func)(op.code.address_mode, &op.param, &reg, bus, result)
+        (instruction.func)(op.code.address_mode, &op.param, &reg, memory, result)
     }
 }
 

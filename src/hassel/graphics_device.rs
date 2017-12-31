@@ -7,8 +7,7 @@
 // copied, modified, or distributed except according to those terms.
 //
 
-use cpu::Cpu;
-use cpu::bus::{Bus, BusDebugView, NullBusDebugView};
+use cpu::memory::{MemoryMap, MemoryMappedDevice, Interrupt};
 
 const CHAR_WIDTH: usize = 9;
 const CHAR_HEIGHT: usize = 16;
@@ -42,20 +41,18 @@ enum IOState {
     SetValuesDma { high: Option<u8>, low: Option<u8>, length: Option<u8> },
 }
 
-pub struct GraphicsBus {
-    debug_view: NullBusDebugView,
+pub struct GraphicsDevice {
     frame_buffer: Vec<u32>,
     next_command: IOState,
     cursor_x: u8,
     cursor_y: u8,
 }
 
-impl GraphicsBus {
-    pub fn new() -> GraphicsBus {
+impl GraphicsDevice {
+    pub fn new() -> GraphicsDevice {
         let frame_buffer: Vec<u32> = vec![DEFAULT_BG_COLOR; FRAME_BUFFER_SIZE];
 
-        let bus = GraphicsBus {
-            debug_view: NullBusDebugView::new(),
+        let bus = GraphicsDevice {
             frame_buffer: frame_buffer,
             next_command: IOState::Listening,
             cursor_x: 0,
@@ -108,12 +105,12 @@ impl GraphicsBus {
     }
 }
 
-impl Bus for GraphicsBus {
-    fn debug_view(&self) -> &BusDebugView {
-        &self.debug_view
+impl MemoryMappedDevice for GraphicsDevice {
+    fn read_byte(&self, _addr: u16) -> u8 {
+        0
     }
 
-    fn read_byte(&mut self, _addr: u16) -> u8 {
+    fn read_byte_mut(&mut self, _addr: u16) -> u8 {
         0
     }
 
@@ -153,11 +150,17 @@ impl Bus for GraphicsBus {
         };
     }
 
-    fn step(&mut self, cpu: &mut Cpu) {
+    fn requires_step(&self) -> bool {
+        true
+    }
+
+    fn step(&mut self, memory: &mut MemoryMap) -> Option<Interrupt> {
         match self.next_command {
             IOState::Listening => { },
             IOState::ClearScreen => {
-                self.frame_buffer = vec![DEFAULT_BG_COLOR; FRAME_BUFFER_SIZE];
+                for i in 0..self.frame_buffer.len() {
+                    self.frame_buffer[i] = DEFAULT_BG_COLOR;
+                }
                 self.next_command = IOState::Listening;
             },
             IOState::SetMode { mode } => {
@@ -186,17 +189,19 @@ impl Bus for GraphicsBus {
                 }
             },
             IOState::SetValuesDma { high, low, length } => {
+                // TODO XXX
                 if high.is_some() && low.is_some() && length.is_some() {
-                    // TODO: DMA and display
                     let addr = ((high.unwrap() as u16) << 8) + low.unwrap() as u16;
-                    let slice = cpu.dma_slice(addr, length.unwrap() as u16);
-                    for chr in slice {
-                        self.put_chr(*chr);
+                    let mut buffer = Vec::with_capacity(length.unwrap() as usize);
+                    memory.read().dma_slice(&mut buffer, addr);
+                    for chr in buffer {
+                        self.put_chr(chr);
                     }
                     self.next_command = IOState::Listening;
                 }
             },
         }
+        None
     }
 }
 
@@ -208,7 +213,7 @@ mod tests {
     pub fn test_render_out_of_bounds() {
         // Expectation: writing out of bounds should not crash
         let address_doesnt_matter = 0;
-        let mut bus = GraphicsBus::new();
+        let mut bus = GraphicsDevice::new();
         for y in 0..256 {
             for x in 0..256 {
                 bus.write_byte(address_doesnt_matter, CMD_SET_POSITION);

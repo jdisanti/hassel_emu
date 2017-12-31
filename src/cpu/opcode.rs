@@ -7,7 +7,7 @@
 // copied, modified, or distributed except according to those terms.
 //
 
-use cpu::bus::Bus;
+use cpu::memory::MemoryMap;
 use cpu::registers::Registers;
 
 pub use hassel_lib6502::{OpParam, OpAddressMode, OpClass, OpCode, Op};
@@ -17,8 +17,8 @@ const ADDR_PAGE_MASK: u16 = 0xFF00;
 pub trait CpuAddressMode {
     fn same_page(addr1: u16, addr2: u16) -> bool;
     fn offset(addr: u16, offset: u8) -> (bool, u16);
-    fn address(&self, param: &OpParam, reg: &Registers, bus: &mut Bus) -> (bool, u16);
-    fn address_and_read_byte(&self, param: &OpParam, reg: &Registers, bus: &mut Bus) -> (bool, u8);
+    fn address(&self, param: &OpParam, reg: &Registers, memory: &mut MemoryMap) -> (bool, u16);
+    fn address_and_read_byte(&self, param: &OpParam, reg: &Registers, memory: &mut MemoryMap) -> (bool, u8);
 }
 
 impl CpuAddressMode for OpAddressMode {
@@ -34,7 +34,7 @@ impl CpuAddressMode for OpAddressMode {
         (different_page, result)
     }
 
-    fn address(&self, param: &OpParam, reg: &Registers, bus: &mut Bus) -> (bool, u16) {
+    fn address(&self, param: &OpParam, reg: &Registers, memory: &mut MemoryMap) -> (bool, u16) {
         use cpu::opcode::OpAddressMode::*;
         let addr = match *self {
             Implied => 0,
@@ -46,10 +46,10 @@ impl CpuAddressMode for OpAddressMode {
             ZeroPageOffsetX => param.as_u8().wrapping_add(reg.x) as u16,
             ZeroPageOffsetY => param.as_u8().wrapping_add(reg.y) as u16,
             PCOffset => unreachable!(),
-            Indirect => bus.read_word(param.as_u16()),
-            PreIndirectX => bus.read_word_zero_page(param.as_u8().wrapping_add(reg.x)),
+            Indirect => memory.read().word(param.as_u16()),
+            PreIndirectX => memory.read().word_zero_page(param.as_u8().wrapping_add(reg.x)),
             PostIndirectY => {
-                let addr = bus.read_word_zero_page(param.as_u8());
+                let addr = memory.read().word_zero_page(param.as_u8());
                 return OpAddressMode::offset(addr, reg.y);
             }
         };
@@ -57,30 +57,30 @@ impl CpuAddressMode for OpAddressMode {
         (false, addr)
     }
 
-    fn address_and_read_byte(&self, param: &OpParam, reg: &Registers, bus: &mut Bus) -> (bool, u8) {
+    fn address_and_read_byte(&self, param: &OpParam, reg: &Registers, memory: &mut MemoryMap) -> (bool, u8) {
         use cpu::opcode::OpAddressMode::*;
-        let (different_page, addr) = self.address(param, reg, bus);
+        let (different_page, addr) = self.address(param, reg, memory);
         match *self {
             Implied => (false, reg.a),
             PCOffset => unreachable!(),
             Immediate => (false, param.as_u8()),
             AbsoluteOffsetX | AbsoluteOffsetY | PostIndirectY => {
-                (different_page, bus.read_byte(addr))
+                (different_page, memory.read().byte(addr))
             },
-            _ => (false, bus.read_byte(addr)),
+            _ => (false, memory.read().byte(addr)),
         }
     }
 }
 
-pub fn decode_op(bus: &mut Bus, reg_pc: u16) -> Op {
-    let op_code_value = bus.read_byte(reg_pc);
+pub fn decode_op(memory: &mut MemoryMap, reg_pc: u16) -> Op {
+    let op_code_value = memory.read().byte(reg_pc);
     let op_code = OpCode::from_value(op_code_value).expect("invalid opcode");
     let op_param = match op_code.len {
         1 => OpParam::None,
-        2 => OpParam::Byte(bus.read_byte(reg_pc.wrapping_add(1))),
+        2 => OpParam::Byte(memory.read().byte(reg_pc.wrapping_add(1))),
         3 => {
-            let lo = bus.read_byte(reg_pc.wrapping_add(1));
-            let hi = bus.read_byte(reg_pc.wrapping_add(2));
+            let lo = memory.read().byte(reg_pc.wrapping_add(1));
+            let hi = memory.read().byte(reg_pc.wrapping_add(2));
             OpParam::Word(((hi as u16) << 8) | (lo as u16))
         }
         _ => panic!("unexpected op-code length")
@@ -91,23 +91,24 @@ pub fn decode_op(bus: &mut Bus, reg_pc: u16) -> Op {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use cpu::bus::Bus;
-    use cpu::bus::TestBus;
+    use cpu::memory::MemoryMap;
     use cpu::registers::Registers;
 
     #[test]
     fn test_zero_page_wrapping() {
-        let mut bus = TestBus::new();
+        let mut memory = MemoryMap::builder()
+            .ram(0x0000, 0xFFFF)
+            .build();
         let mut registers = Registers::new();
         registers.x = 0xFF;
 
         // Write some test data to key addresses
-        bus.write_byte(0x0000, 101);
-        bus.write_byte(0x0100, 213);
+        memory.write().byte(0x0000, 101);
+        memory.write().byte(0x0100, 213);
 
         let params = OpParam::Byte(1);
         let (page_boundary, val) =
-            OpAddressMode::ZeroPageOffsetX.address_and_read_byte(&params, &registers, &mut bus);
+            OpAddressMode::ZeroPageOffsetX.address_and_read_byte(&params, &registers, &mut memory);
 
         // Because this is zero page, the value should wrap to 0x00
         assert_eq!(101, val);

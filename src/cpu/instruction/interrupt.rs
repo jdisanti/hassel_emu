@@ -7,7 +7,6 @@
 // copied, modified, or distributed except according to those terms.
 //
 
-use cpu::bus::Bus;
 use cpu::opcode::OpParam;
 use cpu::opcode::OpAddressMode;
 use cpu::registers::Registers;
@@ -18,7 +17,7 @@ use cpu::instruction::common::push;
 const BRK_VECTOR: u16 = 0xFFFE;
 
 // TODO: unit test
-impl_instruction!(BRK => execute_brk [_mode, _params, reg, bus, result] {
+impl_instruction!(BRK => execute_brk [_mode, _params, reg, memory, result] {
     let reg_pc = reg.pc + 1;
     let reg_status = reg.status.value() | 0x10;
     result = push(result, (reg_pc >> 8) as u8);
@@ -26,7 +25,5 @@ impl_instruction!(BRK => execute_brk [_mode, _params, reg, bus, result] {
     result = push(result, reg_status);
 
     result.reg.status.set_brk(true);
-
-    let addr = Bus::read_word(bus, BRK_VECTOR);
-    result.reg.pc = addr;
+    result.reg.pc = memory.read().word(BRK_VECTOR);
 });

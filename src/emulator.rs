@@ -7,26 +7,18 @@
 // copied, modified, or distributed except according to those terms.
 //
 
-use std::rc::Rc;
-use std::cell::RefCell;
-
 use cpu::Cpu;
-use cpu::bus::Bus;
-
-pub const REQUIRED_ROM_SIZE: usize = 0x2000;
+use cpu::memory::MemoryMap;
 
 pub struct Emulator {
     cpu: Cpu,
-    peripheral_bus: Rc<RefCell<Bus>>,
     last_pc: u16,
 }
 
 impl Emulator {
-    pub fn new(rom: Vec<u8>, peripheral_bus: Rc<RefCell<Bus>>) -> Emulator {
-        assert!(rom.len() == REQUIRED_ROM_SIZE);
+    pub fn new(memory_map: MemoryMap) -> Emulator {
         Emulator {
-            cpu: Cpu::new(rom, Rc::clone(&peripheral_bus)),
-            peripheral_bus: peripheral_bus,
+            cpu: Cpu::new(memory_map),
             last_pc: 0,
         }
     }
@@ -46,8 +38,7 @@ impl Emulator {
 
     pub fn step(&mut self) -> usize {
         self.last_pc = self.cpu.registers().pc;
-        let cycles = self.cpu.next_instruction();
-        self.peripheral_bus.borrow_mut().step(&mut self.cpu);
+        let cycles = self.cpu.step();
         cycles
     }
 }

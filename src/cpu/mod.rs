@@ -7,15 +7,13 @@
 // copied, modified, or distributed except according to those terms.
 //
 
-pub mod bus;
 mod cpu;
-mod cpu_bus;
 mod instruction;
+pub mod memory;
 mod opcode;
 mod register_status;
 mod registers;
 
-pub use cpu::bus::{Bus, BusDebugView};
 pub use cpu::cpu::Cpu;
 pub use cpu::registers::Registers;
 pub use cpu::register_status::RegisterStatus;

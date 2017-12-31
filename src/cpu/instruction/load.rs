@@ -7,7 +7,6 @@
 // copied, modified, or distributed except according to those terms.
 //
 
-use cpu::bus::Bus;
 use cpu::opcode::{CpuAddressMode, OpAddressMode, OpParam};
 use cpu::registers::Registers;
 use cpu::instruction::executor::InstructionResult;

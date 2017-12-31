@@ -7,7 +7,7 @@
 // copied, modified, or distributed except according to those terms.
 //
 
-use cpu::bus::Bus;
+use cpu::memory::MemoryMap;
 use cpu::opcode::{CpuAddressMode, OpAddressMode};
 use cpu::registers::Registers;
 use cpu::instruction::executor::InstructionResult;
@@ -22,11 +22,16 @@ const STACK_ADDR: u16 = 0x0100;
 
 #[macro_export]
 macro_rules! impl_instruction {
-    ($const_name:ident => $name:ident [$mode:ident, $params:ident, $reg:ident, $bus:ident, $result:ident] $block:block) => {
+    ($const_name:ident => $name:ident [$mode:ident, $params:ident, $reg:ident, $memory:ident, $result:ident] $block:block) => {
         pub const $const_name: InstructionFn = &$name;
         #[allow(unused_mut)]
-        fn $name($mode: OpAddressMode, $params: &OpParam, $reg: &Registers, $bus: &mut Bus,
-                mut $result: InstructionResult) -> InstructionResult {
+        fn $name(
+                $mode: OpAddressMode,
+                $params: &OpParam,
+                $reg: &Registers,
+                $memory: &mut ::cpu::memory::MemoryMap,
+                mut $result: InstructionResult)
+        -> InstructionResult {
             $block
             $result
         }
@@ -35,14 +40,16 @@ macro_rules! impl_instruction {
 
 #[macro_export]
 macro_rules! test_instruction {
-    ($test_name:ident, $func:ident, [$reg:ident, $bus:ident] $block:block) => {
+    ($test_name:ident, $func:ident, [$reg:ident, $memory:ident] $block:block) => {
         #[test]
         #[allow(unused_imports)]
         fn $test_name() {
             use super::$func;
 
-            let $reg = &mut Registers::new();
-            let $bus = &mut TestBus::new();
+            let $reg = &mut ::cpu::registers::Registers::new();
+            let $memory = &mut ::cpu::memory::MemoryMap::builder()
+                .ram(0x0000, 0xFFFF)
+                .build();
 
             $block
         }
@@ -56,11 +63,11 @@ pub fn new_result() -> InstructionResult {
 
 #[cfg(test)]
 pub fn execute(func: InstructionFn, mode: OpAddressMode, param: &OpParam,
-        reg: &Registers, bus: &mut Bus, mut result: InstructionResult) -> InstructionResult {
+        reg: &Registers, memory: &mut MemoryMap, mut result: InstructionResult) -> InstructionResult {
     result.writes.clear();
     result.reg = *reg;
 
-    func(mode, param, reg, bus, result)
+    func(mode, param, reg, memory, result)
 }
 
 #[inline]
@@ -71,9 +78,9 @@ pub fn push(mut result: InstructionResult, val: u8) -> InstructionResult {
 }
 
 #[inline]
-pub fn pop(result: &mut InstructionResult, bus: &mut Bus) -> u8 {
+pub fn pop(result: &mut InstructionResult, memory: &mut MemoryMap) -> u8 {
     result.reg.sp = result.reg.sp.wrapping_add(1);
-    bus.read_byte(STACK_ADDR + result.reg.sp as u16)
+    memory.read().byte(STACK_ADDR + result.reg.sp as u16)
 }
 
 // TODO: unit test

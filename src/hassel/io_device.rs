@@ -7,8 +7,7 @@
 // copied, modified, or distributed except according to those terms.
 //
 
-use cpu::Cpu;
-use cpu::bus::{Bus, BusDebugView, NullBusDebugView};
+use cpu::memory::{MemoryMap, MemoryMappedDevice, Interrupt};
 use hassel::key::Key;
 
 const KEY_DOWN_INTERRUPT: u8 = 0x01;
@@ -16,16 +15,14 @@ const KEY_UP_INTERRUPT: u8 = 0x02;
 
 const MAX_RESPONSE_QUEUE_SIZE: usize = 32;
 
-pub struct IOBus {
-    debug_view: NullBusDebugView,
+pub struct IODevice {
     response_queue: Vec<u8>,
     last_interrupt_size: usize,
 }
 
-impl IOBus {
-    pub fn new() -> IOBus {
-        IOBus {
-            debug_view: NullBusDebugView::new(),
+impl IODevice {
+    pub fn new() -> IODevice {
+        IODevice {
             response_queue: Vec::new(),
             last_interrupt_size: 0,
         }
@@ -47,12 +44,12 @@ impl IOBus {
     }
 }
 
-impl Bus for IOBus {
-    fn debug_view(&self) -> &BusDebugView {
-        &self.debug_view
+impl MemoryMappedDevice for IODevice {
+    fn read_byte(&self, _addr: u16) -> u8 {
+        0
     }
 
-    fn read_byte(&mut self, _addr: u16) -> u8 {
+    fn read_byte_mut(&mut self, _addr: u16) -> u8 {
         if self.response_queue.is_empty() {
             0
         } else {
@@ -66,10 +63,16 @@ impl Bus for IOBus {
         // No-op for now
     }
 
-    fn step(&mut self, cpu: &mut Cpu) {
+    fn requires_step(&self) -> bool {
+        true
+    }
+
+    fn step(&mut self, _memory: &mut MemoryMap) -> Option<Interrupt> {
         if !self.response_queue.is_empty() && self.last_interrupt_size != self.response_queue.len() {
-            cpu.request_interrupt();
             self.last_interrupt_size = self.response_queue.len();
+            Some(Interrupt::Interrupt)
+        } else {
+            None
         }
     }
 }
