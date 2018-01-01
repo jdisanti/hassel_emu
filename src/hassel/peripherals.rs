@@ -10,7 +10,7 @@
 use std::cell::RefCell;
 use std::rc::Rc;
 
-use cpu::memory::{MemoryMap, MemoryMappedDevice, Interrupt};
+use cpu::memory::{Interrupt, MemoryMap, MemoryMappedDevice};
 
 use hassel::graphics_device::GraphicsDevice;
 use hassel::io_device::IODevice;
@@ -21,10 +21,7 @@ pub struct Peripherals {
 }
 
 impl Peripherals {
-    pub fn new(
-        graphics: Rc<RefCell<GraphicsDevice>>,
-        io: Rc<RefCell<IODevice>>
-    ) -> Peripherals {
+    pub fn new(graphics: Rc<RefCell<GraphicsDevice>>, io: Rc<RefCell<IODevice>>) -> Peripherals {
         Peripherals {
             graphics: graphics,
             io: io,
@@ -41,7 +38,7 @@ impl MemoryMappedDevice for Peripherals {
         match addr {
             0xDFFE => self.graphics.borrow_mut().read_byte_mut(addr),
             0xDFFF => self.io.borrow_mut().read_byte_mut(addr),
-            _ => unreachable!()
+            _ => unreachable!(),
         }
     }
 
@@ -49,7 +46,7 @@ impl MemoryMappedDevice for Peripherals {
         match addr {
             0xDFFE => self.graphics.borrow_mut().write_byte(addr, val),
             0xDFFF => self.io.borrow_mut().write_byte(addr, val),
-            _ => unreachable!()
+            _ => unreachable!(),
         }
     }
 

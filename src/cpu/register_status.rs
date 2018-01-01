@@ -42,39 +42,67 @@ impl RegisterStatus {
     }
 
     #[inline(always)]
-    pub fn negative(&self) -> bool { self.bit(MASK_NEGATIVE) }
+    pub fn negative(&self) -> bool {
+        self.bit(MASK_NEGATIVE)
+    }
     #[inline(always)]
-    pub fn set_negative(&mut self, val: bool) { self.set_bit(MASK_NEGATIVE, val); }
+    pub fn set_negative(&mut self, val: bool) {
+        self.set_bit(MASK_NEGATIVE, val);
+    }
 
     #[inline(always)]
-    pub fn overflow(&self) -> bool { self.bit(MASK_OVERFLOW) }
+    pub fn overflow(&self) -> bool {
+        self.bit(MASK_OVERFLOW)
+    }
     #[inline(always)]
-    pub fn set_overflow(&mut self, val: bool) { self.set_bit(MASK_OVERFLOW, val); }
+    pub fn set_overflow(&mut self, val: bool) {
+        self.set_bit(MASK_OVERFLOW, val);
+    }
 
     #[inline(always)]
-    pub fn brk(&self) -> bool { self.bit(MASK_BRK) }
+    pub fn brk(&self) -> bool {
+        self.bit(MASK_BRK)
+    }
     #[inline(always)]
-    pub fn set_brk(&mut self, val: bool) { self.set_bit(MASK_BRK, val); }
+    pub fn set_brk(&mut self, val: bool) {
+        self.set_bit(MASK_BRK, val);
+    }
 
     #[inline(always)]
-    pub fn decimal(&self) -> bool { self.bit(MASK_DECIMAL) }
+    pub fn decimal(&self) -> bool {
+        self.bit(MASK_DECIMAL)
+    }
     #[inline(always)]
-    pub fn set_decimal(&mut self, val: bool) { self.set_bit(MASK_DECIMAL, val); }
+    pub fn set_decimal(&mut self, val: bool) {
+        self.set_bit(MASK_DECIMAL, val);
+    }
 
     #[inline(always)]
-    pub fn interrupt_inhibit(&self) -> bool { self.bit(MASK_INTERRUPT_INHIBIT) }
+    pub fn interrupt_inhibit(&self) -> bool {
+        self.bit(MASK_INTERRUPT_INHIBIT)
+    }
     #[inline(always)]
-    pub fn set_interrupt_inhibit(&mut self, val: bool) { self.set_bit(MASK_INTERRUPT_INHIBIT, val); }
+    pub fn set_interrupt_inhibit(&mut self, val: bool) {
+        self.set_bit(MASK_INTERRUPT_INHIBIT, val);
+    }
 
     #[inline(always)]
-    pub fn zero(&self) -> bool { self.bit(MASK_ZERO) }
+    pub fn zero(&self) -> bool {
+        self.bit(MASK_ZERO)
+    }
     #[inline(always)]
-    pub fn set_zero(&mut self, val: bool) { self.set_bit(MASK_ZERO, val); }
+    pub fn set_zero(&mut self, val: bool) {
+        self.set_bit(MASK_ZERO, val);
+    }
 
     #[inline(always)]
-    pub fn carry(&self) -> bool { self.bit(MASK_CARRY) }
+    pub fn carry(&self) -> bool {
+        self.bit(MASK_CARRY)
+    }
     #[inline(always)]
-    pub fn set_carry(&mut self, val: bool) { self.set_bit(MASK_CARRY, val); }
+    pub fn set_carry(&mut self, val: bool) {
+        self.set_bit(MASK_CARRY, val);
+    }
 
     // Sets the negative and zero flags based on the passed in value
     #[inline(always)]

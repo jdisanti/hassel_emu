@@ -7,7 +7,7 @@
 // copied, modified, or distributed except according to those terms.
 //
 
-use cpu::memory::{MemoryMap, MemoryMappedDevice, Interrupt};
+use cpu::memory::{Interrupt, MemoryMap, MemoryMappedDevice};
 use hassel::key::Key;
 
 const KEY_DOWN_INTERRUPT: u8 = 0x01;

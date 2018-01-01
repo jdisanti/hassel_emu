@@ -7,7 +7,7 @@
 // copied, modified, or distributed except according to those terms.
 //
 
-use cpu::memory::{MemoryMap, MemoryMappedDevice, Interrupt};
+use cpu::memory::{Interrupt, MemoryMap, MemoryMappedDevice};
 
 const CHAR_WIDTH: usize = 9;
 const CHAR_HEIGHT: usize = 16;
@@ -34,11 +34,24 @@ enum IOState {
     Listening,
 
     ClearScreen,
-    SetMode { mode: Option<u8> },
-    SetPosition { x: Option<u8>, y: Option<u8> },
-    SetColor { color: Option<u8> },
-    SetValue { value: Option<u8> },
-    SetValuesDma { high: Option<u8>, low: Option<u8>, length: Option<u8> },
+    SetMode {
+        mode: Option<u8>,
+    },
+    SetPosition {
+        x: Option<u8>,
+        y: Option<u8>,
+    },
+    SetColor {
+        color: Option<u8>,
+    },
+    SetValue {
+        value: Option<u8>,
+    },
+    SetValuesDma {
+        high: Option<u8>,
+        low: Option<u8>,
+        length: Option<u8>,
+    },
 }
 
 pub struct GraphicsDevice {
@@ -116,16 +129,18 @@ impl MemoryMappedDevice for GraphicsDevice {
 
     fn write_byte(&mut self, _addr: u16, val: u8) {
         self.next_command = match self.next_command {
-            IOState::Listening => {
-                match val {
-                    CMD_CLEAR_SCREEN => IOState::ClearScreen,
-                    CMD_SET_MODE => IOState::SetMode { mode: None },
-                    CMD_SET_POSITION => IOState::SetPosition { x: None, y: None },
-                    CMD_SET_COLOR => IOState::SetColor { color: None },
-                    CMD_SET_VALUE => IOState::SetValue { value: None },
-                    CMD_SET_VALUES_DMA => IOState::SetValuesDma { high: None, low: None, length: None },
-                    _ => IOState::Listening,
-                }
+            IOState::Listening => match val {
+                CMD_CLEAR_SCREEN => IOState::ClearScreen,
+                CMD_SET_MODE => IOState::SetMode { mode: None },
+                CMD_SET_POSITION => IOState::SetPosition { x: None, y: None },
+                CMD_SET_COLOR => IOState::SetColor { color: None },
+                CMD_SET_VALUE => IOState::SetValue { value: None },
+                CMD_SET_VALUES_DMA => IOState::SetValuesDma {
+                    high: None,
+                    low: None,
+                    length: None,
+                },
+                _ => IOState::Listening,
             },
             IOState::ClearScreen => IOState::Listening,
             IOState::SetMode { .. } => IOState::SetMode { mode: Some(val) },
@@ -135,16 +150,28 @@ impl MemoryMappedDevice for GraphicsDevice {
                 } else {
                     IOState::SetPosition { x: x, y: Some(val) }
                 }
-            },
+            }
             IOState::SetColor { .. } => IOState::SetColor { color: Some(val) },
             IOState::SetValue { .. } => IOState::SetValue { value: Some(val) },
             IOState::SetValuesDma { high, low, length } => {
                 if high.is_none() {
-                    IOState::SetValuesDma { high: Some(val), low: low, length: length }
+                    IOState::SetValuesDma {
+                        high: Some(val),
+                        low: low,
+                        length: length,
+                    }
                 } else if low.is_none() {
-                    IOState::SetValuesDma { high: high, low: Some(val), length: length }
+                    IOState::SetValuesDma {
+                        high: high,
+                        low: Some(val),
+                        length: length,
+                    }
                 } else {
-                    IOState::SetValuesDma { high: high, low: low, length: Some(val) }
+                    IOState::SetValuesDma {
+                        high: high,
+                        low: low,
+                        length: Some(val),
+                    }
                 }
             }
         };
@@ -156,38 +183,38 @@ impl MemoryMappedDevice for GraphicsDevice {
 
     fn step(&mut self, memory: &mut MemoryMap) -> Option<Interrupt> {
         match self.next_command {
-            IOState::Listening => { },
+            IOState::Listening => {}
             IOState::ClearScreen => {
                 for i in 0..self.frame_buffer.len() {
                     self.frame_buffer[i] = DEFAULT_BG_COLOR;
                 }
                 self.next_command = IOState::Listening;
-            },
+            }
             IOState::SetMode { mode } => {
                 if mode.is_some() {
                     // TODO: set the mode
                     self.next_command = IOState::Listening;
                 }
-            },
+            }
             IOState::SetPosition { x, y } => {
                 if x.is_some() && y.is_some() {
                     self.cursor_x = x.unwrap();
                     self.cursor_y = y.unwrap();
                     self.next_command = IOState::Listening;
                 }
-            },
+            }
             IOState::SetColor { color } => {
                 if color.is_some() {
                     // TODO: set the color
                     self.next_command = IOState::Listening;
                 }
-            },
+            }
             IOState::SetValue { value } => {
                 if value.is_some() {
                     self.put_chr(value.unwrap());
                     self.next_command = IOState::Listening;
                 }
-            },
+            }
             IOState::SetValuesDma { high, low, length } => {
                 // TODO XXX
                 if high.is_some() && low.is_some() && length.is_some() {
@@ -199,7 +226,7 @@ impl MemoryMappedDevice for GraphicsDevice {
                     }
                     self.next_command = IOState::Listening;
                 }
-            },
+            }
         }
         None
     }

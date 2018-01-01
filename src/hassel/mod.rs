@@ -18,7 +18,7 @@ mod key;
 mod peripherals;
 
 pub use self::key::Key;
-pub use self::graphics_device::{GraphicsDevice, SCREEN_WIDTH_PIXELS, SCREEN_HEIGHT_PIXELS};
+pub use self::graphics_device::{GraphicsDevice, SCREEN_HEIGHT_PIXELS, SCREEN_WIDTH_PIXELS};
 pub use self::io_device::IODevice;
 use self::peripherals::Peripherals;
 
@@ -30,9 +30,7 @@ pub struct HasselSystemBuilder {
 
 impl HasselSystemBuilder {
     pub fn new() -> HasselSystemBuilder {
-        HasselSystemBuilder {
-            rom: None
-        }
+        HasselSystemBuilder { rom: None }
     }
 
     pub fn rom(mut self, rom: Vec<u8>) -> Self {
@@ -40,21 +38,29 @@ impl HasselSystemBuilder {
         self
     }
 
-    pub fn build(self) -> (MemoryMap, Rc<RefCell<GraphicsDevice>>, Rc<RefCell<IODevice>>) {
+    pub fn build(
+        self,
+    ) -> (
+        MemoryMap,
+        Rc<RefCell<GraphicsDevice>>,
+        Rc<RefCell<IODevice>>,
+    ) {
         assert!(self.rom.is_some(), "HasselMemoryMapBuilder requires a rom");
 
         let graphics = Rc::new(RefCell::new(graphics_device::GraphicsDevice::new()));
         let io = Rc::new(RefCell::new(io_device::IODevice::new()));
 
-        let peripherals: Rc<RefCell<MemoryMappedDevice>> =
-            Rc::new(RefCell::new(Peripherals::new(Rc::clone(&graphics), Rc::clone(&io))));
+        let peripherals: Rc<RefCell<MemoryMappedDevice>> = Rc::new(RefCell::new(Peripherals::new(
+            Rc::clone(&graphics),
+            Rc::clone(&io),
+        )));
 
         let memory_map = MemoryMap::builder()
             .ram(0x0000, 0xDFFD)
             .peripheral(0xDFFE, 0xDFFF, peripherals)
             .rom(0xE000, 0xFFFF, self.rom.unwrap())
             .build();
-        
+
         (memory_map, graphics, io)
     }
 }

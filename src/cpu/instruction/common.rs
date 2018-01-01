@@ -62,8 +62,14 @@ pub fn new_result() -> InstructionResult {
 }
 
 #[cfg(test)]
-pub fn execute(func: InstructionFn, mode: OpAddressMode, param: &OpParam,
-        reg: &Registers, memory: &mut MemoryMap, mut result: InstructionResult) -> InstructionResult {
+pub fn execute(
+    func: InstructionFn,
+    mode: OpAddressMode,
+    param: &OpParam,
+    reg: &Registers,
+    memory: &mut MemoryMap,
+    mut result: InstructionResult,
+) -> InstructionResult {
     result.writes.clear();
     result.reg = *reg;
 
@@ -72,7 +78,9 @@ pub fn execute(func: InstructionFn, mode: OpAddressMode, param: &OpParam,
 
 #[inline]
 pub fn push(mut result: InstructionResult, val: u8) -> InstructionResult {
-    result.writes.push(Write::new(STACK_ADDR + result.reg.sp as u16, val));
+    result
+        .writes
+        .push(Write::new(STACK_ADDR + result.reg.sp as u16, val));
     result.reg.sp = result.reg.sp.wrapping_sub(1);
     result
 }

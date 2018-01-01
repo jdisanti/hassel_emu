@@ -7,7 +7,7 @@
 // copied, modified, or distributed except according to those terms.
 //
 
-use cpu::memory::{MemoryMap, Interrupt};
+use cpu::memory::{Interrupt, MemoryMap};
 use cpu::registers::Registers;
 use cpu::instruction::Executor;
 use cpu::instruction::InstructionResult;
@@ -20,7 +20,7 @@ const STACK_ADDR: u16 = 0x0100;
 
 pub struct Cpu {
     registers: Registers,
-    memory: MemoryMap, 
+    memory: MemoryMap,
     cycle: usize,
     executor: Executor,
 }
@@ -73,7 +73,8 @@ impl Cpu {
 
     pub fn step(&mut self) -> usize {
         let mut result = InstructionResult::new();
-        result = self.executor.execute_instruction(&self.registers, &mut self.memory, result);
+        result = self.executor
+            .execute_instruction(&self.registers, &mut self.memory, result);
 
         for write in &result.writes {
             self.memory.write().byte(write.address, write.value);
@@ -83,8 +84,12 @@ impl Cpu {
         self.cycle += result.cycles;
 
         match self.memory.step() {
-            Some(Interrupt::Interrupt) => { self.request_interrupt(); }
-            Some(Interrupt::NonMaskableInterrupt) => { self.request_non_maskable_interrupt(); }
+            Some(Interrupt::Interrupt) => {
+                self.request_interrupt();
+            }
+            Some(Interrupt::NonMaskableInterrupt) => {
+                self.request_non_maskable_interrupt();
+            }
             _ => {}
         }
 
@@ -93,7 +98,9 @@ impl Cpu {
 
     #[inline]
     fn push(&mut self, registers: &mut Registers, val: u8) {
-        self.memory.write().byte(STACK_ADDR + registers.sp as u16, val);
+        self.memory
+            .write()
+            .byte(STACK_ADDR + registers.sp as u16, val);
         registers.sp = registers.sp.wrapping_sub(1);
     }
 

@@ -8,7 +8,7 @@
 //
 
 use std::rc::Rc;
-use std::cell::{RefCell, Ref, RefMut};
+use std::cell::{Ref, RefCell, RefMut};
 use std::mem;
 
 macro_rules! read_word {
@@ -107,7 +107,7 @@ pub trait MemoryMappedDevice {
 
     fn requires_step(&self) -> bool;
 
-    fn step(&mut self, memory: &mut MemoryMap)-> Option<Interrupt>;
+    fn step(&mut self, memory: &mut MemoryMap) -> Option<Interrupt>;
 }
 
 pub struct RAMDevice {
@@ -143,7 +143,7 @@ impl MemoryMappedDevice for RAMDevice {
         false
     }
 
-    fn step(&mut self, _memory: &mut MemoryMap)-> Option<Interrupt> {
+    fn step(&mut self, _memory: &mut MemoryMap) -> Option<Interrupt> {
         None
     }
 }
@@ -172,14 +172,13 @@ impl MemoryMappedDevice for ROMDevice {
         self.read_byte(addr)
     }
 
-    fn write_byte(&mut self, _addr: u16, _val: u8) {
-    }
+    fn write_byte(&mut self, _addr: u16, _val: u8) {}
 
     fn requires_step(&self) -> bool {
         false
     }
 
-    fn step(&mut self, _memory: &mut MemoryMap)-> Option<Interrupt> {
+    fn step(&mut self, _memory: &mut MemoryMap) -> Option<Interrupt> {
         None
     }
 }
@@ -201,14 +200,13 @@ impl MemoryMappedDevice for NullDevice {
         0
     }
 
-    fn write_byte(&mut self, _addr: u16, _val: u8) {
-    }
+    fn write_byte(&mut self, _addr: u16, _val: u8) {}
 
     fn requires_step(&self) -> bool {
         false
     }
 
-    fn step(&mut self, _memory: &mut MemoryMap)-> Option<Interrupt> {
+    fn step(&mut self, _memory: &mut MemoryMap) -> Option<Interrupt> {
         None
     }
 }
@@ -234,13 +232,13 @@ impl MemorySegment {
 
     pub fn debug<'a>(&'a self) -> DebugMemoryView<'a> {
         DebugMemoryView {
-            device: self.device.borrow()
+            device: self.device.borrow(),
         }
     }
 
     pub fn normal<'a>(&'a self) -> NormalMemoryView<'a> {
         NormalMemoryView {
-            device: self.device.borrow_mut()
+            device: self.device.borrow_mut(),
         }
     }
 
@@ -264,39 +262,56 @@ pub struct MemoryMapBuilder {
 impl MemoryMapBuilder {
     pub fn new() -> MemoryMapBuilder {
         MemoryMapBuilder {
-            segments: Vec::new()
+            segments: Vec::new(),
         }
     }
 
     pub fn ram(self, start: u16, end_inclusive: u16) -> Self {
         assert!(end_inclusive >= start);
         let length = (end_inclusive as usize + 1) - start as usize;
-        self.peripheral(start, end_inclusive, Rc::new(RefCell::new(RAMDevice::new(start, length))))
+        self.peripheral(
+            start,
+            end_inclusive,
+            Rc::new(RefCell::new(RAMDevice::new(start, length))),
+        )
     }
 
     pub fn rom(self, start: u16, end_inclusive: u16, data: Vec<u8>) -> Self {
         assert!(end_inclusive >= start);
         let length = (end_inclusive as usize + 1) - start as usize;
-        assert_eq!(length, data.len(), "given rom is not the right size for the built memory map");
-        self.peripheral(start, end_inclusive, Rc::new(RefCell::new(ROMDevice::new(start, data))))
+        assert_eq!(
+            length,
+            data.len(),
+            "given rom is not the right size for the built memory map"
+        );
+        self.peripheral(
+            start,
+            end_inclusive,
+            Rc::new(RefCell::new(ROMDevice::new(start, data))),
+        )
     }
 
     pub fn peripheral(mut self, start: u16, end_inclusive: u16, device: Rc<RefCell<MemoryMappedDevice>>) -> Self {
-        self.segments.push(MemorySegment::new(start, end_inclusive, device));
+        self.segments
+            .push(MemorySegment::new(start, end_inclusive, device));
         self
     }
 
     pub fn build(mut self) -> MemoryMap {
-        self.segments.sort_by(|lhs, rhs| {
-            lhs.start.cmp(&rhs.start)
-        });
+        self.segments.sort_by(|lhs, rhs| lhs.start.cmp(&rhs.start));
 
         let mut address: usize = 0;
         for segment in &self.segments {
-            assert!(address == segment.start as usize, "found a gap in built memory map");
+            assert!(
+                address == segment.start as usize,
+                "found a gap in built memory map"
+            );
             address = segment.end_inclusive as usize + 1;
         }
-        assert!(address == 0x10000, "built memory map doesn't cover the full address range");
+        assert!(
+            address == 0x10000,
+            "built memory map doesn't cover the full address range"
+        );
 
         MemoryMap::new(self.segments)
     }
@@ -310,7 +325,7 @@ impl MemoryMapInner {
     fn segment(&self, addr: u16) -> &MemorySegment {
         for segment in &self.segments {
             if segment.start <= addr && segment.end_inclusive >= addr {
-                return segment
+                return segment;
             }
         }
         unreachable!()
@@ -344,11 +359,9 @@ pub struct MemoryMap {
 impl MemoryMap {
     fn new(segments: Vec<MemorySegment>) -> MemoryMap {
         MemoryMap {
-            inner: MemoryMapInner {
-                segments: segments,
-            },
+            inner: MemoryMapInner { segments: segments },
             working_segment_cache: None,
-            null_device_cache: None
+            null_device_cache: None,
         }
     }
 
@@ -419,7 +432,7 @@ mod tests {
             .ram(0x0000, 0xCFFF)
             .rom(0xD000, 0xFFFF, vec![0xEA; 0x10000 - 0xD000])
             .build();
-        
+
         assert_eq!(0x00, memory.read().byte(0x0005));
         memory.write().byte(0x0005, 0xFF);
         assert_eq!(0xFF, memory.read().byte(0x0005));

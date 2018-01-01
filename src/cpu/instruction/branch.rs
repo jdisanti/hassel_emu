@@ -11,7 +11,7 @@ use cpu::opcode::{OpAddressMode, OpParam};
 use cpu::registers::Registers;
 use cpu::instruction::executor::InstructionResult;
 use cpu::instruction::executor::InstructionFn;
-use cpu::instruction::common::{branch, push, pop};
+use cpu::instruction::common::{branch, pop, push};
 
 // TODO: unit test
 impl_instruction!(BCC => execute_bcc [_mode, params, reg, _memory, result] {

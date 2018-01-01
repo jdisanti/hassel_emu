@@ -42,24 +42,27 @@ impl InstructionResult {
     }
 }
 
-pub type InstructionFn = &'static Fn(OpAddressMode, &OpParam, &Registers, &mut MemoryMap, InstructionResult) -> InstructionResult;
+pub type InstructionFn = &'static Fn(OpAddressMode, &OpParam, &Registers, &mut MemoryMap, InstructionResult)
+    -> InstructionResult;
 
 struct Instruction {
     pub op: Op,
     pub func: InstructionFn,
 }
 
-pub struct Executor {
-}
+pub struct Executor {}
 
 impl Executor {
     pub fn new() -> Executor {
-        Executor {
-        }
+        Executor {}
     }
 
-    pub fn execute_instruction(&mut self, reg: &Registers, memory: &mut MemoryMap,
-            mut result: InstructionResult) -> InstructionResult {
+    pub fn execute_instruction(
+        &mut self,
+        reg: &Registers,
+        memory: &mut MemoryMap,
+        mut result: InstructionResult,
+    ) -> InstructionResult {
         let op = opcode::decode_op(memory, reg.pc);
         let instruction = Instruction {
             op: op,
@@ -89,44 +92,83 @@ fn match_impl(op_class: OpClass) -> InstructionFn {
     use cpu::instruction::stack::{PHA, PHP, PLA, PLP};
     use cpu::instruction::transfer::{TAX, TAY, TSX, TXA, TXS, TYA};
     use cpu::instruction::compare::{BIT, CMP, CPX, CPY};
-    use cpu::instruction::branch::{BCC, BCS, BEQ, BMI, BNE, BPL, BVC, BVS,
-                                   JMP, JSR, RTS, RTI};
-    use cpu::instruction::bitwise::{AND, ASL, LSR, EOR, ORA, ROL, ROR};
-    use cpu::instruction::arithmetic::{ADC, SBC, DEC, DEX, DEY, INC, INX, INY};
+    use cpu::instruction::branch::{BCC, BCS, BEQ, BMI, BNE, BPL, BVC, BVS, JMP, JSR, RTI, RTS};
+    use cpu::instruction::bitwise::{AND, ASL, EOR, LSR, ORA, ROL, ROR};
+    use cpu::instruction::arithmetic::{ADC, DEC, DEX, DEY, INC, INX, INY, SBC};
 
     match op_class {
-        Nop => NOP, Top => TOP, Brk => BRK,
+        Nop => NOP,
+        Top => TOP,
+        Brk => BRK,
 
         // Flag modifiers
-        Clc => CLC, Cld => CLD, Cli => CLI, Clv => CLV,
-        Sec => SEC, Sed => SED, Sei => SEI,
+        Clc => CLC,
+        Cld => CLD,
+        Cli => CLI,
+        Clv => CLV,
+        Sec => SEC,
+        Sed => SED,
+        Sei => SEI,
 
         // Load/store
-        Lda => LDA, Ldx => LDX, Ldy => LDY,
-        Sta => STA, Stx => STX, Sty => STY,
+        Lda => LDA,
+        Ldx => LDX,
+        Ldy => LDY,
+        Sta => STA,
+        Stx => STX,
+        Sty => STY,
 
         // Stack
-        Pha => PHA, Php => PHP, Pla => PLA, Plp => PLP,
+        Pha => PHA,
+        Php => PHP,
+        Pla => PLA,
+        Plp => PLP,
 
         // Transfer
-        Tax => TAX, Tay => TAY, Tsx => TSX, Txa => TXA,
-        Txs => TXS, Tya => TYA,
+        Tax => TAX,
+        Tay => TAY,
+        Tsx => TSX,
+        Txa => TXA,
+        Txs => TXS,
+        Tya => TYA,
 
         // Compare
-        Bit => BIT, Cmp => CMP, Cpx => CPX, Cpy => CPY,
+        Bit => BIT,
+        Cmp => CMP,
+        Cpx => CPX,
+        Cpy => CPY,
 
         // Branch
-        Bcc => BCC, Bcs => BCS, Beq => BEQ, Bmi => BMI,
-        Bne => BNE, Bpl => BPL, Bvc => BVC, Bvs => BVS,
-        Jmp => JMP, Jsr => JSR, Rts => RTS, Rti => RTI,
+        Bcc => BCC,
+        Bcs => BCS,
+        Beq => BEQ,
+        Bmi => BMI,
+        Bne => BNE,
+        Bpl => BPL,
+        Bvc => BVC,
+        Bvs => BVS,
+        Jmp => JMP,
+        Jsr => JSR,
+        Rts => RTS,
+        Rti => RTI,
 
         // Bitwise
-        And => AND, Asl => ASL, Lsr => LSR, Eor => EOR,
-        Ora => ORA, Rol => ROL, Ror => ROR,
+        And => AND,
+        Asl => ASL,
+        Lsr => LSR,
+        Eor => EOR,
+        Ora => ORA,
+        Rol => ROL,
+        Ror => ROR,
 
         // Arithmetic
-        Adc => ADC, Sbc => SBC,
-        Dec => DEC, Dex => DEX, Dey => DEY,
-        Inc => INC, Inx => INX, Iny => INY,
+        Adc => ADC,
+        Sbc => SBC,
+        Dec => DEC,
+        Dex => DEX,
+        Dey => DEY,
+        Inc => INC,
+        Inx => INX,
+        Iny => INY,
     }
 }

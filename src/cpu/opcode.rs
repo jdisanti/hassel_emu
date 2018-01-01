@@ -10,7 +10,7 @@
 use cpu::memory::MemoryMap;
 use cpu::registers::Registers;
 
-pub use hassel_lib6502::{OpParam, OpAddressMode, OpClass, OpCode, Op};
+pub use hassel_lib6502::{Op, OpAddressMode, OpClass, OpCode, OpParam};
 
 const ADDR_PAGE_MASK: u16 = 0xFF00;
 
@@ -47,7 +47,9 @@ impl CpuAddressMode for OpAddressMode {
             ZeroPageOffsetY => param.as_u8().wrapping_add(reg.y) as u16,
             PCOffset => unreachable!(),
             Indirect => memory.read().word(param.as_u16()),
-            PreIndirectX => memory.read().word_zero_page(param.as_u8().wrapping_add(reg.x)),
+            PreIndirectX => memory
+                .read()
+                .word_zero_page(param.as_u8().wrapping_add(reg.x)),
             PostIndirectY => {
                 let addr = memory.read().word_zero_page(param.as_u8());
                 return OpAddressMode::offset(addr, reg.y);
@@ -64,9 +66,7 @@ impl CpuAddressMode for OpAddressMode {
             Implied => (false, reg.a),
             PCOffset => unreachable!(),
             Immediate => (false, param.as_u8()),
-            AbsoluteOffsetX | AbsoluteOffsetY | PostIndirectY => {
-                (different_page, memory.read().byte(addr))
-            },
+            AbsoluteOffsetX | AbsoluteOffsetY | PostIndirectY => (different_page, memory.read().byte(addr)),
             _ => (false, memory.read().byte(addr)),
         }
     }
@@ -83,7 +83,7 @@ pub fn decode_op(memory: &mut MemoryMap, reg_pc: u16) -> Op {
             let hi = memory.read().byte(reg_pc.wrapping_add(2));
             OpParam::Word(((hi as u16) << 8) | (lo as u16))
         }
-        _ => panic!("unexpected op-code length")
+        _ => panic!("unexpected op-code length"),
     };
     Op::new(op_code, op_param)
 }
@@ -96,9 +96,7 @@ mod tests {
 
     #[test]
     fn test_zero_page_wrapping() {
-        let mut memory = MemoryMap::builder()
-            .ram(0x0000, 0xFFFF)
-            .build();
+        let mut memory = MemoryMap::builder().ram(0x0000, 0xFFFF).build();
         let mut registers = Registers::new();
         registers.x = 0xFF;
 
