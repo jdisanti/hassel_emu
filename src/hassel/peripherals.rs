@@ -10,7 +10,7 @@
 use std::cell::RefCell;
 use std::rc::Rc;
 
-use cpu::memory::{Interrupt, MemoryMap, MemoryMappedDevice};
+use emulator::{InterruptType, MemoryMap, MemoryMappedDevice};
 
 use hassel::graphics_device::GraphicsDevice;
 use hassel::io_device::IODevice;
@@ -54,7 +54,7 @@ impl MemoryMappedDevice for Peripherals {
         true
     }
 
-    fn step(&mut self, memory: &mut MemoryMap) -> Option<Interrupt> {
+    fn step(&mut self, memory: &mut MemoryMap) -> Option<InterruptType> {
         let graphics_interrupt = self.graphics.borrow_mut().step(memory);
         let io_interrupt = self.io.borrow_mut().step(memory);
         if io_interrupt.is_some() {

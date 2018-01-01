@@ -7,11 +7,11 @@
 // copied, modified, or distributed except according to those terms.
 //
 
-use cpu::opcode::{OpAddressMode, OpParam};
-use cpu::registers::Registers;
-use cpu::instruction::executor::InstructionResult;
-use cpu::instruction::executor::InstructionFn;
-use cpu::instruction::common::{branch, pop, push};
+use emulator::opcode::{OpAddressMode, OpParam};
+use emulator::registers::Registers;
+use emulator::instruction::executor::InstructionResult;
+use emulator::instruction::executor::InstructionFn;
+use emulator::instruction::common::{branch, pop, push};
 
 // TODO: unit test
 impl_instruction!(BCC => execute_bcc [_mode, params, reg, _memory, result] {

@@ -7,13 +7,13 @@
 // copied, modified, or distributed except according to those terms.
 //
 
-use cpu::opcode::OpParam;
-use cpu::opcode::OpAddressMode;
-use cpu::registers::Registers;
-use cpu::instruction::executor::InstructionResult;
-use cpu::instruction::executor::InstructionFn;
-use cpu::instruction::common::pop;
-use cpu::instruction::common::push;
+use emulator::opcode::OpParam;
+use emulator::opcode::OpAddressMode;
+use emulator::registers::Registers;
+use emulator::instruction::executor::InstructionResult;
+use emulator::instruction::executor::InstructionFn;
+use emulator::instruction::common::pop;
+use emulator::instruction::common::push;
 
 // TODO: unit test
 impl_instruction!(PHA => execute_pha [_mode, _params, reg, _bus, result] {

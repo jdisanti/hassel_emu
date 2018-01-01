@@ -7,8 +7,8 @@
 // copied, modified, or distributed except according to those terms.
 //
 
-use cpu::memory::MemoryMap;
-use cpu::registers::Registers;
+use emulator::memory::MemoryMap;
+use emulator::registers::Registers;
 
 pub use hassel_lib6502::{Op, OpAddressMode, OpClass, OpCode, OpParam};
 
@@ -35,7 +35,7 @@ impl CpuAddressMode for OpAddressMode {
     }
 
     fn address(&self, param: &OpParam, reg: &Registers, memory: &mut MemoryMap) -> (bool, u16) {
-        use cpu::opcode::OpAddressMode::*;
+        use emulator::opcode::OpAddressMode::*;
         let addr = match *self {
             Implied => 0,
             Immediate => param.as_u16(),
@@ -60,7 +60,7 @@ impl CpuAddressMode for OpAddressMode {
     }
 
     fn address_and_read_byte(&self, param: &OpParam, reg: &Registers, memory: &mut MemoryMap) -> (bool, u8) {
-        use cpu::opcode::OpAddressMode::*;
+        use emulator::opcode::OpAddressMode::*;
         let (different_page, addr) = self.address(param, reg, memory);
         match *self {
             Implied => (false, reg.a),
@@ -91,8 +91,8 @@ pub fn decode_op(memory: &mut MemoryMap, reg_pc: u16) -> Op {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use cpu::memory::MemoryMap;
-    use cpu::registers::Registers;
+    use emulator::memory::MemoryMap;
+    use emulator::registers::Registers;
 
     #[test]
     fn test_zero_page_wrapping() {

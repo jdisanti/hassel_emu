@@ -7,11 +7,11 @@
 // copied, modified, or distributed except according to those terms.
 //
 
-use cpu::opcode::{CpuAddressMode, OpAddressMode, OpParam};
-use cpu::registers::Registers;
-use cpu::instruction::executor::InstructionResult;
-use cpu::instruction::executor::InstructionFn;
-use cpu::instruction::common::compare;
+use emulator::opcode::{CpuAddressMode, OpAddressMode, OpParam};
+use emulator::registers::Registers;
+use emulator::instruction::executor::InstructionResult;
+use emulator::instruction::executor::InstructionFn;
+use emulator::instruction::common::compare;
 
 // TODO: unit test
 impl_instruction!(BIT => execute_bit [_mode, params, reg, bus, result] {

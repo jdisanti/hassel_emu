@@ -7,7 +7,7 @@
 // copied, modified, or distributed except according to those terms.
 //
 
-use cpu::memory::{Interrupt, MemoryMap, MemoryMappedDevice};
+use emulator::{InterruptType, MemoryMap, MemoryMappedDevice};
 use hassel::key::Key;
 
 const KEY_DOWN_INTERRUPT: u8 = 0x01;
@@ -67,10 +67,10 @@ impl MemoryMappedDevice for IODevice {
         true
     }
 
-    fn step(&mut self, _memory: &mut MemoryMap) -> Option<Interrupt> {
+    fn step(&mut self, _memory: &mut MemoryMap) -> Option<InterruptType> {
         if !self.response_queue.is_empty() && self.last_interrupt_size != self.response_queue.len() {
             self.last_interrupt_size = self.response_queue.len();
-            Some(Interrupt::Interrupt)
+            Some(InterruptType::Maskable)
         } else {
             None
         }

@@ -7,11 +7,11 @@
 // copied, modified, or distributed except according to those terms.
 //
 
-use cpu::opcode::{CpuAddressMode, OpAddressMode, OpParam};
-use cpu::registers::Registers;
-use cpu::instruction::executor::InstructionResult;
-use cpu::instruction::executor::InstructionFn;
-use cpu::instruction::executor::Write;
+use emulator::opcode::{CpuAddressMode, OpAddressMode, OpParam};
+use emulator::registers::Registers;
+use emulator::instruction::executor::InstructionResult;
+use emulator::instruction::executor::InstructionFn;
+use emulator::instruction::executor::Write;
 
 impl_instruction!(ADC => execute_adc [mode, params, reg, memory, result] {
     let (page_boundary, operand) = mode.address_and_read_byte(params, reg, memory);
@@ -85,9 +85,9 @@ impl_instruction!(INY => execute_iny [_mode, _params, reg, _memory, result] {
 
 #[cfg(test)]
 mod tests {
-    use cpu::instruction::common::{execute, new_result};
-    use cpu::opcode::OpAddressMode::*;
-    use cpu::opcode::OpParam;
+    use emulator::instruction::common::{execute, new_result};
+    use emulator::opcode::OpAddressMode::*;
+    use emulator::opcode::OpParam;
 
     test_instruction!(test_adc_simple, ADC, [reg, memory] {
         reg.a = 1;

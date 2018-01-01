@@ -7,19 +7,20 @@
 // copied, modified, or distributed except according to those terms.
 //
 
-use cpu::memory::MemoryMap;
-use cpu::opcode::{CpuAddressMode, OpAddressMode};
-use cpu::registers::Registers;
-use cpu::instruction::executor::InstructionResult;
-use cpu::instruction::executor::Write;
+use emulator::memory::MemoryMap;
+use emulator::opcode::{CpuAddressMode, OpAddressMode};
+use emulator::registers::Registers;
+use emulator::instruction::executor::InstructionResult;
+use emulator::instruction::executor::Write;
 
 #[cfg(test)]
-use cpu::opcode::OpParam;
+use emulator::opcode::OpParam;
 #[cfg(test)]
-use cpu::instruction::executor::InstructionFn;
+use emulator::instruction::executor::InstructionFn;
 
 const STACK_ADDR: u16 = 0x0100;
 
+#[doc(hidden)]
 #[macro_export]
 macro_rules! impl_instruction {
     ($const_name:ident => $name:ident [$mode:ident, $params:ident, $reg:ident, $memory:ident, $result:ident] $block:block) => {
@@ -29,7 +30,7 @@ macro_rules! impl_instruction {
                 $mode: OpAddressMode,
                 $params: &OpParam,
                 $reg: &Registers,
-                $memory: &mut ::cpu::memory::MemoryMap,
+                $memory: &mut ::emulator::memory::MemoryMap,
                 mut $result: InstructionResult)
         -> InstructionResult {
             $block
@@ -38,6 +39,7 @@ macro_rules! impl_instruction {
     }
 }
 
+#[doc(hidden)]
 #[macro_export]
 macro_rules! test_instruction {
     ($test_name:ident, $func:ident, [$reg:ident, $memory:ident] $block:block) => {
@@ -46,8 +48,8 @@ macro_rules! test_instruction {
         fn $test_name() {
             use super::$func;
 
-            let $reg = &mut ::cpu::registers::Registers::new();
-            let $memory = &mut ::cpu::memory::MemoryMap::builder()
+            let $reg = &mut ::emulator::registers::Registers::new();
+            let $memory = &mut ::emulator::memory::MemoryMap::builder()
                 .ram(0x0000, 0xFFFF)
                 .build();
 

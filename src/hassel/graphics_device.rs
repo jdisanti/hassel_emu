@@ -7,7 +7,7 @@
 // copied, modified, or distributed except according to those terms.
 //
 
-use cpu::memory::{Interrupt, MemoryMap, MemoryMappedDevice};
+use emulator::{InterruptType, MemoryMap, MemoryMappedDevice};
 
 const CHAR_WIDTH: usize = 9;
 const CHAR_HEIGHT: usize = 16;
@@ -181,7 +181,7 @@ impl MemoryMappedDevice for GraphicsDevice {
         true
     }
 
-    fn step(&mut self, memory: &mut MemoryMap) -> Option<Interrupt> {
+    fn step(&mut self, memory: &mut MemoryMap) -> Option<InterruptType> {
         match self.next_command {
             IOState::Listening => {}
             IOState::ClearScreen => {

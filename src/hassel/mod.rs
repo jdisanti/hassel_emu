@@ -7,7 +7,10 @@
 // copied, modified, or distributed except according to those terms.
 //
 
-use cpu::memory::{MemoryMap, MemoryMappedDevice};
+//! Holds all of the Hasseldorf Computer specific code. This can be turned off by
+//! removing the "hassel_arch" feature when including this crate.
+
+use emulator::{MemoryMap, MemoryMappedDevice};
 
 use std::cell::RefCell;
 use std::rc::Rc;

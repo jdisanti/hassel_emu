@@ -7,10 +7,10 @@
 // copied, modified, or distributed except according to those terms.
 //
 
-use cpu::opcode::{CpuAddressMode, OpAddressMode, OpParam};
-use cpu::registers::Registers;
-use cpu::instruction::executor::InstructionResult;
-use cpu::instruction::executor::InstructionFn;
+use emulator::opcode::{CpuAddressMode, OpAddressMode, OpParam};
+use emulator::registers::Registers;
+use emulator::instruction::executor::InstructionResult;
+use emulator::instruction::executor::InstructionFn;
 
 impl_instruction!(NOP => execute_nop [_mode, _params, _reg, _memory, result] {
 });
@@ -21,9 +21,9 @@ impl_instruction!(TOP => execute_top [mode, params, reg, memory, result] {
 
 #[cfg(test)]
 mod tests {
-    use cpu::instruction::common::{execute, new_result};
-    use cpu::opcode::OpAddressMode::*;
-    use cpu::opcode::OpParam;
+    use emulator::instruction::common::{execute, new_result};
+    use emulator::opcode::OpAddressMode::*;
+    use emulator::opcode::OpParam;
 
     test_instruction!(test_execute_top_abs, TOP, [reg, memory] {
         let result = execute(TOP, Absolute, &OpParam::Word(0), reg, memory, new_result());

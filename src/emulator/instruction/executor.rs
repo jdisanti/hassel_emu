@@ -7,9 +7,9 @@
 // copied, modified, or distributed except according to those terms.
 //
 
-use cpu::memory::MemoryMap;
-use cpu::opcode::{self, Op, OpAddressMode, OpClass, OpParam};
-use cpu::registers::Registers;
+use emulator::memory::MemoryMap;
+use emulator::opcode::{self, Op, OpAddressMode, OpClass, OpParam};
+use emulator::registers::Registers;
 
 #[derive(Copy, Clone)]
 pub struct Write {
@@ -82,19 +82,19 @@ impl Executor {
 }
 
 fn match_impl(op_class: OpClass) -> InstructionFn {
-    use cpu::opcode::OpClass::*;
+    use emulator::opcode::OpClass::*;
 
-    use cpu::instruction::nop::{NOP, TOP};
-    use cpu::instruction::interrupt::BRK;
-    use cpu::instruction::flag::{CLC, CLD, CLI, CLV, SEC, SED, SEI};
-    use cpu::instruction::load::{LDA, LDX, LDY};
-    use cpu::instruction::store::{STA, STX, STY};
-    use cpu::instruction::stack::{PHA, PHP, PLA, PLP};
-    use cpu::instruction::transfer::{TAX, TAY, TSX, TXA, TXS, TYA};
-    use cpu::instruction::compare::{BIT, CMP, CPX, CPY};
-    use cpu::instruction::branch::{BCC, BCS, BEQ, BMI, BNE, BPL, BVC, BVS, JMP, JSR, RTI, RTS};
-    use cpu::instruction::bitwise::{AND, ASL, EOR, LSR, ORA, ROL, ROR};
-    use cpu::instruction::arithmetic::{ADC, DEC, DEX, DEY, INC, INX, INY, SBC};
+    use emulator::instruction::nop::{NOP, TOP};
+    use emulator::instruction::interrupt::BRK;
+    use emulator::instruction::flag::{CLC, CLD, CLI, CLV, SEC, SED, SEI};
+    use emulator::instruction::load::{LDA, LDX, LDY};
+    use emulator::instruction::store::{STA, STX, STY};
+    use emulator::instruction::stack::{PHA, PHP, PLA, PLP};
+    use emulator::instruction::transfer::{TAX, TAY, TSX, TXA, TXS, TYA};
+    use emulator::instruction::compare::{BIT, CMP, CPX, CPY};
+    use emulator::instruction::branch::{BCC, BCS, BEQ, BMI, BNE, BPL, BVC, BVS, JMP, JSR, RTI, RTS};
+    use emulator::instruction::bitwise::{AND, ASL, EOR, LSR, ORA, ROL, ROR};
+    use emulator::instruction::arithmetic::{ADC, DEC, DEX, DEY, INC, INX, INY, SBC};
 
     match op_class {
         Nop => NOP,

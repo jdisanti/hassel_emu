@@ -7,10 +7,10 @@
 // copied, modified, or distributed except according to those terms.
 //
 
-use cpu::opcode::{CpuAddressMode, OpAddressMode, OpParam};
-use cpu::registers::Registers;
-use cpu::instruction::executor::InstructionResult;
-use cpu::instruction::executor::InstructionFn;
+use emulator::opcode::{CpuAddressMode, OpAddressMode, OpParam};
+use emulator::registers::Registers;
+use emulator::instruction::executor::InstructionResult;
+use emulator::instruction::executor::InstructionFn;
 
 // TODO: unit test
 impl_instruction!(LDA => execute_lda [mode, params, reg, bus, result] {

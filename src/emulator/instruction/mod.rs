@@ -23,6 +23,6 @@ mod stack;
 mod store;
 mod transfer;
 
-pub use cpu::instruction::executor::Executor;
-pub use cpu::instruction::executor::InstructionResult;
-pub use cpu::instruction::executor::Write;
+pub use emulator::instruction::executor::Executor;
+pub use emulator::instruction::executor::InstructionResult;
+pub use emulator::instruction::executor::Write;

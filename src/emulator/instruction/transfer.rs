@@ -7,11 +7,11 @@
 // copied, modified, or distributed except according to those terms.
 //
 
-use cpu::opcode::OpParam;
-use cpu::opcode::OpAddressMode;
-use cpu::registers::Registers;
-use cpu::instruction::executor::InstructionResult;
-use cpu::instruction::executor::InstructionFn;
+use emulator::opcode::OpParam;
+use emulator::opcode::OpAddressMode;
+use emulator::registers::Registers;
+use emulator::instruction::executor::InstructionResult;
+use emulator::instruction::executor::InstructionFn;
 
 impl_instruction!(TAX => execute_tax [_mode, _params, reg, _bus, result] {
     result.reg.set_reg_x(reg.a);
@@ -43,9 +43,9 @@ impl_instruction!(TYA => execute_tya [_mode, _params, reg, _bus, result] {
 
 #[cfg(test)]
 mod tests {
-    use cpu::instruction::common::{execute, new_result};
-    use cpu::opcode::OpAddressMode::*;
-    use cpu::opcode::OpParam;
+    use emulator::instruction::common::{execute, new_result};
+    use emulator::opcode::OpAddressMode::*;
+    use emulator::opcode::OpParam;
 
     test_instruction!(test_tax_and_tay, TAX, [reg, bus] {
         use super::{TAX, TAY};
