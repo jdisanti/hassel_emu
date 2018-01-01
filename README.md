@@ -8,9 +8,6 @@ If you just want to test some 6502 code, it's trivial to setup a system that has
 IO devices to run your code and check the result:
 
 ```rust
-# extern crate hassel_emu;
-# use hassel_emu::*;
-# fn main() {
 // This is a simple ROM that has two instructions:
 //   LDA #3
 //   STA $00
@@ -33,7 +30,6 @@ cpu.step();
 
 // We should see 3 at address 0x0000
 assert_eq!(3u8, cpu.memory().debug_read().byte(0x0000));
-# }
 ```
 
 To create your own memory-mapped hardware peripheral, you just need to
